@@ -1,16 +1,43 @@
+// lib/screens/signup_screen.dart
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
-import 'welcome_screen.dart';
+import '../services/auth_service.dart';
+import '../routes/routes.dart';
 
 class SignUpScreen extends StatelessWidget {
-  const SignUpScreen({super.key});
+  final AuthService _authService = AuthService();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  Future<void> _signUp(BuildContext context) async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Passwords do not match!")),
+      );
+      return;
+    }
+
+    final user = await _authService.signUpWithEmailAndPassword(
+      _emailController.text,
+      _passwordController.text,
+    );
+    if (user != null) {
+      // Navigate to HomeScreen after successful signup
+      Navigator.pushReplacementNamed(context, Routes.home);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Signup Failed. Please try again.")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A1F44), // Dark blue background
       body: SafeArea(
-        child: SingleChildScrollView( // Fix overflow issue
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -19,10 +46,7 @@ class SignUpScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => WelcomeScreen()),
-                    );
+                    Navigator.pop(context);
                   },
                   child: const Row(
                     children: [
@@ -36,7 +60,7 @@ class SignUpScreen extends StatelessWidget {
 
               const SizedBox(height: 25),
 
-              // Create Account Text
+              // Create Your Account Text
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -64,7 +88,7 @@ class SignUpScreen extends StatelessWidget {
 
               const SizedBox(height: 35),
 
-              // Sign Up Form
+              // Centering the signup form
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -113,14 +137,12 @@ class SignUpScreen extends StatelessWidget {
                               contentPadding: EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
-                          const SizedBox(height: 30),
-                          
-                          // Sign Up Button
+                          const SizedBox(height: 20),
+
+                          // Sign Up Button Inside White Box
                           Center(
                             child: ElevatedButton(
-                              onPressed: () {
-                                // Sign-up logic
-                              },
+                              onPressed: () => _signUp(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue.shade900,
                                 padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
@@ -143,10 +165,7 @@ class SignUpScreen extends StatelessWidget {
                     // Sign In Navigation
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => LoginScreen()),
-                        );
+                        Navigator.pushNamed(context, Routes.login);
                       },
                       child: RichText(
                         text: const TextSpan(
@@ -165,7 +184,7 @@ class SignUpScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 20), // Extra space to prevent overflow
+                    const SizedBox(height: 20), // Added extra spacing
                   ],
                 ),
               ),

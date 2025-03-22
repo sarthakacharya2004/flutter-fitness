@@ -1,9 +1,52 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'signup_screen.dart';
-import 'welcome_screen.dart';
+import '../services/auth_service.dart';
+import 'home_screen.dart'; // Import your HomeScreen
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  final AuthService _authService = AuthService();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> _login(BuildContext context) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // Validate email and password
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please enter both email and password.")),
+      );
+      return;
+    }
+
+    try {
+      final user = await _authService.loginWithEmailAndPassword(email, password);
+      if (user != null) {
+        // Navigate to HomeScreen after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = "Login Failed. Please try again.";
+      if (e.code == "invalid-email") {
+        errorMessage = "Invalid email address.";
+      } else if (e.code == "user-not-found") {
+        errorMessage = "No user found with this email.";
+      } else if (e.code == "wrong-password") {
+        errorMessage = "Incorrect password.";
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login Failed. Please try again.")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,10 +62,7 @@ class LoginScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => WelcomeScreen()),
-                    );
+                    Navigator.pop(context);
                   },
                   child: const Row(
                     children: [
@@ -80,7 +120,8 @@ class LoginScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const TextField(
+                          TextField(
+                            controller: _emailController,
                             decoration: InputDecoration(
                               labelText: "Email",
                               border: UnderlineInputBorder(),
@@ -88,7 +129,8 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 15),
-                          const TextField(
+                          TextField(
+                            controller: _passwordController,
                             obscureText: true,
                             decoration: InputDecoration(
                               labelText: "Password",
@@ -112,9 +154,7 @@ class LoginScreen extends StatelessWidget {
                           // Sign In Button Inside White Box
                           Center(
                             child: ElevatedButton(
-                              onPressed: () {
-                                // Add sign-in logic
-                              },
+                              onPressed: () => _login(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue.shade900,
                                 padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
@@ -137,10 +177,7 @@ class LoginScreen extends StatelessWidget {
                     // Sign Up Navigation
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SignUpScreen()),
-                        );
+                        Navigator.pushNamed(context, '/signup');
                       },
                       child: RichText(
                         text: const TextSpan(
