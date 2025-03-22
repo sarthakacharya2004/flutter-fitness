@@ -1,12 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fitness_hub/screens/forgot_password_screen.dart';
+import 'package:fitness_hub/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'home_screen.dart'; // Import your HomeScreen
+import 'home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  LoginScreen({super.key});
 
   Future<void> _login(BuildContext context) async {
     final email = _emailController.text.trim();
@@ -141,11 +145,19 @@ class LoginScreen extends StatelessWidget {
                           const SizedBox(height: 10),
                           Align(
                             alignment: Alignment.centerRight,
-                            child: Text(
-                              "Forgot password?",
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 14,
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+                                );
+                              },
+                              child: Text(
+                                "Forgot password?",
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ),
@@ -177,7 +189,10 @@ class LoginScreen extends StatelessWidget {
                     // Sign Up Navigation
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/signup');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SignUpScreen()),
+                        );
                       },
                       child: RichText(
                         text: const TextSpan(
@@ -195,9 +210,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 20), // Added extra spacing
-                  ],
+                  ]
                 ),
               ),
             ],

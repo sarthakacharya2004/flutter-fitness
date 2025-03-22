@@ -60,6 +60,55 @@ class AuthService {
     }
   }
 
+  // Send verification code to email
+  Future<void> sendVerificationCode(String email) async {
+    try {
+      // Check if the email exists in Firebase
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
+      if (methods.isEmpty) {
+        throw FirebaseAuthException(
+          code: "user-not-found",
+          message: "No user found with this email.",
+        );
+      }
+
+      // Send a password reset email (this will include a verification code)
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      print("Verification Code Failed: ${e.code} - ${e.message}");
+      throw e;
+    } catch (e) {
+      print("Verification Code Failed: $e");
+      throw e;
+    }
+  }
+
+  // Verify the code and update the password
+  Future<void> verifyCodeAndUpdatePassword(String email, String code, String newPassword) async {
+    try {
+      // Verify the code (this is a placeholder; Firebase doesn't natively support code verification for password reset)
+      // You can use a custom implementation or a third-party service for code verification.
+      // For now, we'll assume the code is correct and update the password directly.
+
+      // Reauthenticate the user (if needed)
+      final user = _auth.currentUser;
+      if (user != null && user.email == email) {
+        await user.updatePassword(newPassword);
+      } else {
+        throw FirebaseAuthException(
+          code: "invalid-user",
+          message: "Unable to update password for this user.",
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      print("Password Update Failed: ${e.code} - ${e.message}");
+      throw e;
+    } catch (e) {
+      print("Password Update Failed: $e");
+      throw e;
+    }
+  }
+
   // Sign out
   Future<void> signOut() async {
     await _auth.signOut();

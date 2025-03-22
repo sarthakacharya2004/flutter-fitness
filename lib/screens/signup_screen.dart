@@ -1,4 +1,5 @@
-// lib/screens/signup_screen.dart
+import 'package:fitness_hub/screens/login_screen.dart';
+import 'package:fitness_hub/screens/signup_steps_screen.dart'; // Import the signup steps screen
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../routes/routes.dart';
@@ -13,21 +14,29 @@ class SignUpScreen extends StatelessWidget {
   Future<void> _signUp(BuildContext context) async {
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Passwords do not match!")),
+        const SnackBar(content: Text("Passwords do not match!")),
       );
       return;
     }
 
-    final user = await _authService.signUpWithEmailAndPassword(
-      _emailController.text,
-      _passwordController.text,
-    );
-    if (user != null) {
-      // Navigate to HomeScreen after successful signup
-      Navigator.pushReplacementNamed(context, Routes.home);
-    } else {
+    try {
+      final user = await _authService.signUpWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+      if (user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Signup Successful!")),
+        );
+        // Navigate to BodyWeightScreen after successful signup
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => BodyWeightScreen()),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Signup Failed. Please try again.")),
+        SnackBar(content: Text("Signup Failed: $e")),
       );
     }
   }
@@ -35,19 +44,16 @@ class SignUpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1F44), // Dark blue background
+      backgroundColor: const Color(0xFF0A1F44),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back Button
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
+                  onTap: () => Navigator.pop(context),
                   child: const Row(
                     children: [
                       Icon(Icons.arrow_back, color: Colors.white),
@@ -60,7 +66,6 @@ class SignUpScreen extends StatelessWidget {
 
               const SizedBox(height: 25),
 
-              // Create Your Account Text
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -88,13 +93,11 @@ class SignUpScreen extends StatelessWidget {
 
               const SizedBox(height: 35),
 
-              // Centering the signup form
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // White Input Container
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -104,34 +107,39 @@ class SignUpScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const TextField(
-                            decoration: InputDecoration(
+                          TextField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
                               labelText: "Full Name",
                               border: UnderlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
-                          const TextField(
-                            decoration: InputDecoration(
+                          TextField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
                               labelText: "Email",
                               border: UnderlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
-                          const TextField(
+                          TextField(
+                            controller: _passwordController,
                             obscureText: true,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: "Password",
                               border: UnderlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
-                          const TextField(
+                          TextField(
+                            controller: _confirmPasswordController,
                             obscureText: true,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: "Confirm Password",
                               border: UnderlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(vertical: 10),
@@ -139,7 +147,6 @@ class SignUpScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
 
-                          // Sign Up Button Inside White Box
                           Center(
                             child: ElevatedButton(
                               onPressed: () => _signUp(context),
@@ -162,10 +169,12 @@ class SignUpScreen extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // Sign In Navigation
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, Routes.login);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                        );
                       },
                       child: RichText(
                         text: const TextSpan(
@@ -183,8 +192,7 @@ class SignUpScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 20), // Added extra spacing
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
