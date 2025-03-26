@@ -20,7 +20,7 @@ class AuthService {
       return await _auth.signInWithCredential(credential);
     } catch (e) {
       print("Error signing in with Google: $e");
-      throw e; // Throw the exception to handle it in the UI
+      rethrow; // Throw the exception to handle it in the UI
     }
   }
 
@@ -35,10 +35,10 @@ class AuthService {
       return userCredential.user; // Return the created user
     } on FirebaseAuthException catch (e) {
       print("Signup Failed: ${e.code} - ${e.message}"); // Detailed error
-      throw e; // Throw the exception to handle it in the UI
+      rethrow; // Throw the exception to handle it in the UI
     } catch (e) {
       print("Signup Failed: $e"); // General error
-      throw e; // Throw the exception to handle it in the UI
+      rethrow; // Throw the exception to handle it in the UI
     }
   }
 
@@ -53,10 +53,10 @@ class AuthService {
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       print("Login Failed: ${e.code} - ${e.message}"); // Detailed error
-      throw e; // Throw the exception to handle it in the UI
+      rethrow; // Throw the exception to handle it in the UI
     } catch (e) {
       print("Login Failed: $e"); // General error
-      throw e; // Throw the exception to handle it in the UI
+      rethrow; // Throw the exception to handle it in the UI
     }
   }
 
@@ -76,10 +76,10 @@ class AuthService {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
       print("Verification Code Failed: ${e.code} - ${e.message}");
-      throw e;
+      rethrow;
     } catch (e) {
       print("Verification Code Failed: $e");
-      throw e;
+      rethrow;
     }
   }
 
@@ -102,10 +102,10 @@ class AuthService {
       }
     } on FirebaseAuthException catch (e) {
       print("Password Update Failed: ${e.code} - ${e.message}");
-      throw e;
+      rethrow;
     } catch (e) {
       print("Password Update Failed: $e");
-      throw e;
+      rethrow;
     }
   }
 

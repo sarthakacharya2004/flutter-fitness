@@ -9,7 +9,10 @@ class SignUpScreen extends StatelessWidget {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
+  SignUpScreen({super.key});
 
   Future<void> _signUp(BuildContext context) async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -31,7 +34,7 @@ class SignUpScreen extends StatelessWidget {
         // Navigate to BodyWeightScreen after successful signup
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => BodyWeightScreen()),
+          MaterialPageRoute(builder: (context) => SignupStepsScreen()),
         );
       }
     } catch (e) {
@@ -58,14 +61,13 @@ class SignUpScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.arrow_back, color: Colors.white),
                       SizedBox(width: 5),
-                      Text("Back", style: TextStyle(color: Colors.white, fontSize: 16)),
+                      Text("Back",
+                          style: TextStyle(color: Colors.white, fontSize: 16)),
                     ],
                   ),
                 ),
               ),
-
               const SizedBox(height: 25),
-
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -90,9 +92,7 @@ class SignUpScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 35),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -112,7 +112,8 @@ class SignUpScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               labelText: "Full Name",
                               border: UnderlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -122,7 +123,8 @@ class SignUpScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               labelText: "Email",
                               border: UnderlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -132,7 +134,8 @@ class SignUpScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               labelText: "Password",
                               border: UnderlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -142,38 +145,39 @@ class SignUpScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               labelText: "Confirm Password",
                               border: UnderlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 20),
-
                           Center(
                             child: ElevatedButton(
                               onPressed: () => _signUp(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue.shade900,
-                                padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 100, vertical: 15),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
                               child: const Text(
                                 "SIGN UP",
-                                style: TextStyle(color: Colors.white, fontSize: 16),
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 16),
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => LoginScreen()),
                         );
                       },
                       child: RichText(
