@@ -1,3 +1,6 @@
+import 'package:fitness_hub/screens/nutrition_screen.dart';
+import 'package:fitness_hub/screens/profile_screen.dart';
+import 'package:fitness_hub/screens/workout_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'settings_screen.dart';
@@ -202,7 +205,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildBottomNavBar(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: 0,
+      currentIndex: 0, // Consider managing this dynamically
       selectedItemColor: const Color(0xFF0A1F44),
       unselectedItemColor: Colors.black54,
       type: BottomNavigationBarType.fixed,
@@ -215,7 +218,24 @@ class HomeScreen extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
       onTap: (index) {
-        // Handle navigation logic
+        switch (index) {
+          case 0:
+            Navigator.push(
+                context, MaterialPageRoute(builder: (context) => HomeScreen()));
+            break;
+          case 1:
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => NutritionScreen()));
+            break;
+          case 2:
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => WorkoutScreen()));
+            break;
+          case 3:
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => ProfileScreen()));
+            break;
+        }
       },
     );
   }
