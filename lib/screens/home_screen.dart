@@ -105,7 +105,7 @@ class HomeScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color.fromARGB(255, 139, 70, 70),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
