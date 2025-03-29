@@ -42,6 +42,7 @@ dependencies:
   # sign_in_with_apple: ^5.0.0
   fl_chart: ^0.63.0
   cloud_firestore: 5.6.5
+  shared_preferences: ^2.0.15
   
 
   # The following adds the Cupertino Icons font to your application.
@@ -74,6 +75,11 @@ flutter:
     - assets/google.png
     - assets/apple.png
     - assets/mainlogo.png
+    - assets/profile_image.png
+    - assets/scrambled-eggs.png
+    - assets/full-body.png
+    - assets/core-workout.png
+    - assets/hiit-workout.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
