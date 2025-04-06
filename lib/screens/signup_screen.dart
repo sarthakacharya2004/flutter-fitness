@@ -1,17 +1,25 @@
 import 'package:fitness_hub/screens/login_screen.dart';
-import 'package:fitness_hub/screens/signup_steps_screen.dart'; // Import the signup steps screen
+import 'package:fitness_hub/screens/verify_email_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../routes/routes.dart';
 
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
+
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
   final AuthService _authService = AuthService();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  bool _isLoading = false;
 
-  Future<void> _signUp(BuildContext context) async {
+  Future<void> _signUp() async {
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Passwords do not match!")),
@@ -19,25 +27,32 @@ class SignUpScreen extends StatelessWidget {
       return;
     }
 
+    setState(() => _isLoading = true);
+
     try {
       final user = await _authService.signUpWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      if (user != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Signup Successful!")),
-        );
-        // Navigate to BodyWeightScreen after successful signup
+
+      if (user != null && context.mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => BodyWeightScreen()),
+          MaterialPageRoute(
+            builder: (context) => VerifyEmailScreen(email: _emailController.text.trim()),
+          ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Signup Failed: $e")),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Signup Failed: ${e.toString()}")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -58,14 +73,13 @@ class SignUpScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.arrow_back, color: Colors.white),
                       SizedBox(width: 5),
-                      Text("Back", style: TextStyle(color: Colors.white, fontSize: 16)),
+                      Text("Back",
+                          style: TextStyle(color: Colors.white, fontSize: 16)),
                     ],
                   ),
                 ),
               ),
-
               const SizedBox(height: 25),
-
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -90,9 +104,7 @@ class SignUpScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 35),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -112,7 +124,8 @@ class SignUpScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               labelText: "Full Name",
                               border: UnderlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -122,7 +135,8 @@ class SignUpScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               labelText: "Email",
                               border: UnderlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -132,7 +146,8 @@ class SignUpScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               labelText: "Password",
                               border: UnderlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -142,38 +157,41 @@ class SignUpScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               labelText: "Confirm Password",
                               border: UnderlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
                             ),
                           ),
                           const SizedBox(height: 20),
-
                           Center(
                             child: ElevatedButton(
-                              onPressed: () => _signUp(context),
+                              onPressed: _isLoading ? null : _signUp,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue.shade900,
-                                padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 100, vertical: 15),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              child: const Text(
-                                "SIGN UP",
-                                style: TextStyle(color: Colors.white, fontSize: 16),
-                              ),
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : const Text(
+                                      "SIGN UP",
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 16),
+                                    ),
                             ),
                           ),
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => LoginScreen()),
                         );
                       },
                       child: RichText(
