@@ -125,7 +125,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.blue[50],
+          color: Colors.lightBlueAccent.withOpacity(0.3),
           borderRadius: BorderRadius.circular(15),
         ),
         child: Row(
@@ -172,9 +172,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             child: Text(
               'Workout Categories',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -196,15 +197,24 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   Widget _buildCategoryItem(Map<String, dynamic> category) {
     return Container(
       margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           CircleAvatar(
-            radius: 35,
+            radius: 38,
             backgroundColor: category['color'],
             child: Icon(
               category['icon'],
               color: category['iconColor'],
-              size: 30,
+              size: 32,
             ),
           ),
           const SizedBox(height: 8),
@@ -229,9 +239,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           Text(
             'Recommended Workouts',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+              letterSpacing: 0.5,
             ),
           ),
           const SizedBox(height: 12),
@@ -285,20 +296,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _buildWorkoutInfoChip(
-                      Icons.timer_outlined, 
-                      workout['duration']
-                    ),
+                    _buildWorkoutInfoChip(Icons.timer_outlined, workout['duration']),
                     const SizedBox(width: 8),
-                    _buildWorkoutInfoChip(
-                      Icons.flash_on_outlined, 
-                      workout['difficulty']
-                    ),
+                    _buildWorkoutInfoChip(Icons.flash_on_outlined, workout['difficulty']),
                     const SizedBox(width: 8),
-                    _buildWorkoutInfoChip(
-                      Icons.local_fire_department_outlined, 
-                      '${workout['calories']} Cal'
-                    ),
+                    _buildWorkoutInfoChip(Icons.local_fire_department_outlined, '${workout['calories']} Cal'),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -307,9 +309,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     // TODO: Start workout
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.deepPurple,
+                    elevation: 3,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     minimumSize: const Size(double.infinity, 50),
                   ),
@@ -378,9 +381,16 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   Widget _buildNavBarItem(IconData icon, bool isActive, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Icon(
-        icon,
-        color: isActive ? Colors.black : Colors.grey,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isActive ? Colors.blue[100] : Colors.transparent,
+        ),
+        child: Icon(
+          icon,
+          color: isActive ? Colors.blue : Colors.grey,
+        ),
       ),
     );
   }
