@@ -1,106 +1,135 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart';
-import '../routes/routes.dart';
+import 'package:fitness_hub/screens/home_screen.dart';
 
-class BodyWeightScreen extends StatefulWidget {
+class SignupStepsScreen extends StatefulWidget {
+  const SignupStepsScreen({super.key});
+
   @override
-  _BodyWeightScreenState createState() => _BodyWeightScreenState();
+  _SignupStepsScreenState createState() => _SignupStepsScreenState();
 }
 
-class _BodyWeightScreenState extends State<BodyWeightScreen> {
+class _SignupStepsScreenState extends State<SignupStepsScreen> {
   final TextEditingController _weightController = TextEditingController();
+  String? selectedGoal;
+  String? selectedDiet;
+  int step = 1;
 
-  void _continue() {
-    if (_weightController.text.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => BodyGoalScreen(weight: _weightController.text)),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please enter your weight")),
-      );
-    }
+  void _nextStep() {
+    setState(() {
+      if (step == 1 && _weightController.text.isNotEmpty) {
+        step = 2;
+      } else if (step == 2 && selectedGoal != null) {
+        step = 3;
+      } else if (step == 3 && selectedDiet != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please complete the selection")),
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Enter Your Body Weight")),
-      body: Center(
+      appBar: AppBar(title: const Text("Personalise Your Experience")),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _weightController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: "Weight in kg"),
+            LinearProgressIndicator(value: step / 3),
+            const SizedBox(height: 20),
+            if (step == 1) ...[
+              const Text("Enter Your Body Weight", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _weightController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Weight in kg",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ] else if (step == 2) ...[
+              const Text("Select Your Goal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              _buildSelectionBox("Shredded"),
+              _buildSelectionBox("Lean"),
+              _buildSelectionBox("Bulk"),
+              _buildSelectionBox("Muscular"),
+            ] else if (step == 3) ...[
+              const Text("Choose Your Diet Preference", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              _buildDietSelection("Vegetarian"),
+              _buildDietSelection("Non-Vegetarian"),
+            ],
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _nextStep,
+                child: Text(step == 3 ? "Finish" : "Next", style: const TextStyle(fontSize: 16, color: Colors.white)),
+              ),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _continue,
-              child: Text("Continue"),
-            ),
           ],
         ),
       ),
     );
   }
-}
 
-class BodyGoalScreen extends StatelessWidget {
-  final String weight;
-  BodyGoalScreen({required this.weight});
-
-  void _selectGoal(BuildContext context, String goal) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => DietPreferenceScreen(weight: weight, goal: goal)),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Select Your Goal")),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildSelectionBox(String goal) {
+    return GestureDetector(
+      onTap: () => setState(() => selectedGoal = goal),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: selectedGoal == goal ? Colors.blue.shade100 : Colors.white,
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ElevatedButton(onPressed: () => _selectGoal(context, "Bulk"), child: Text("Bulk")),
-            ElevatedButton(onPressed: () => _selectGoal(context, "Shredded"), child: Text("Shredded")),
-            ElevatedButton(onPressed: () => _selectGoal(context, "Lean"), child: Text("Lean")),
-            ElevatedButton(onPressed: () => _selectGoal(context, "Maintain"), child: Text("Maintain")),
+            Text(goal, style: const TextStyle(fontSize: 16)),
+            if (selectedGoal == goal) const Icon(Icons.check, color: Colors.blue),
           ],
         ),
       ),
     );
   }
-}
 
-class DietPreferenceScreen extends StatelessWidget {
-  final String weight;
-  final String goal;
-  DietPreferenceScreen({required this.weight, required this.goal});
-
-  void _selectDiet(BuildContext context, String diet) {
-    Navigator.pushNamed(context, Routes.home);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Choose Your Diet Preference")),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildDietSelection(String diet) {
+    return GestureDetector(
+      onTap: () => setState(() => selectedDiet = diet),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: selectedDiet == diet ? Colors.blue.shade100 : Colors.white,
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ElevatedButton(onPressed: () => _selectDiet(context, "Vegetarian"), child: Text("Vegetarian")),
-            ElevatedButton(onPressed: () => _selectDiet(context, "Non-Vegetarian"), child: Text("Non-Vegetarian")),
+            Text(diet, style: const TextStyle(fontSize: 16)),
+            if (selectedDiet == diet) const Icon(Icons.check, color: Colors.blue),
           ],
         ),
-      ),
-    );
-  }
+     ),
+);
+}
 }
