@@ -5,11 +5,14 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
+  // Stream to track authentication state changes
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null; // User canceled the sign-in
+      if (googleUser == null) return null;
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
@@ -20,50 +23,127 @@ class AuthService {
       return await _auth.signInWithCredential(credential);
     } catch (e) {
       print("Error signing in with Google: $e");
-      rethrow; // Throw the exception to handle it in the UI
+      rethrow;
     }
   }
 
-  // Sign up with email and password
+  // Enhanced sign up with email verification
   Future<User?> signUpWithEmailAndPassword(String email, String password) async {
     try {
-      print("Signing up with email: $email, password: $password"); // Debug print
+      print("Signing up with email: $email");
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return userCredential.user; // Return the created user
+
+      User? user = userCredential.user;
+
+      // Add delay to avoid Firebase spam detection
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (user != null && !user.emailVerified) {
+        await _sendVerificationWithCooldown(user);
+      }
+
+      return user;
     } on FirebaseAuthException catch (e) {
-      print("Signup Failed: ${e.code} - ${e.message}"); // Detailed error
-      rethrow; // Throw the exception to handle it in the UI
+      print("Signup Failed: ${e.code} - ${e.message}");
+      rethrow;
     } catch (e) {
-      print("Signup Failed: $e"); // General error
-      rethrow; // Throw the exception to handle it in the UI
+      print("Signup Failed: $e");
+      rethrow;
     }
   }
 
-  // Sign in with email and password
+  // Enhanced login with email verification check
   Future<User?> loginWithEmailAndPassword(String email, String password) async {
     try {
-      print("Logging in with email: $email, password: $password"); // Debug print
+      print("Logging in with email: $email");
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return userCredential.user;
+
+      User? user = userCredential.user;
+      await _checkEmailVerification(user);
+
+      return user;
     } on FirebaseAuthException catch (e) {
-      print("Login Failed: ${e.code} - ${e.message}"); // Detailed error
-      rethrow; // Throw the exception to handle it in the UI
+      print("Login Failed: ${e.code} - ${e.message}");
+      rethrow;
     } catch (e) {
-      print("Login Failed: $e"); // General error
-      rethrow; // Throw the exception to handle it in the UI
+      print("Login Failed: $e");
+      rethrow;
     }
   }
 
-  // Send verification code to email
-  Future<void> sendVerificationCode(String email) async {
+  // Check email verification status
+  Future<void> _checkEmailVerification(User? user) async {
+    if (user != null && !user.emailVerified) {
+      // Reload user to get latest verification status
+      await user.reload();
+      user = _auth.currentUser;
+
+      if (user != null && !user.emailVerified) {
+        await _auth.signOut();
+        throw FirebaseAuthException(
+          code: 'email-not-verified',
+          message: 'Email not verified. Please check your inbox.',
+        );
+      }
+    }
+  }
+
+  // Send verification email with cooldown
+  Future<void> _sendVerificationWithCooldown(User user) async {
     try {
-      // Check if the email exists in Firebase
+      await user.sendEmailVerification();
+      print("✅ Verification email sent to ${user.email}");
+      
+      // Store last sent time to prevent spam
+      // You might want to use shared_preferences for persistence
+      lastVerificationEmailSent = DateTime.now();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'too-many-requests') {
+        print("Verification email cooldown active");
+        throw FirebaseAuthException(
+          code: 'verification-cooldown',
+          message: 'Please wait before requesting another verification email',
+        );
+      }
+      rethrow;
+    }
+  }
+
+  DateTime? lastVerificationEmailSent;
+
+  // Enhanced resend verification email
+  Future<void> resendEmailVerification() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null && !user.emailVerified) {
+        // Check cooldown (5 minutes)
+        if (lastVerificationEmailSent != null &&
+            DateTime.now().difference(lastVerificationEmailSent!) <
+                const Duration(minutes: 5)) {
+          throw FirebaseAuthException(
+            code: 'verification-cooldown',
+            message: 'Please wait before requesting another verification email',
+          );
+        }
+
+        await Future.delayed(const Duration(seconds: 1));
+        await _sendVerificationWithCooldown(user);
+      }
+    } catch (e) {
+      print("Failed to resend verification email: $e");
+      rethrow;
+    }
+  }
+
+  // Password reset
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
       final methods = await _auth.fetchSignInMethodsForEmail(email);
       if (methods.isEmpty) {
         throw FirebaseAuthException(
@@ -72,39 +152,26 @@ class AuthService {
         );
       }
 
-      // Send a password reset email (this will include a verification code)
       await _auth.sendPasswordResetEmail(email: email);
+      print("🔑 Password reset email sent.");
     } on FirebaseAuthException catch (e) {
-      print("Verification Code Failed: ${e.code} - ${e.message}");
+      print("Password Reset Failed: ${e.code} - ${e.message}");
       rethrow;
     } catch (e) {
-      print("Verification Code Failed: $e");
+      print("Password Reset Failed: $e");
       rethrow;
     }
   }
 
-  // Verify the code and update the password
-  Future<void> verifyCodeAndUpdatePassword(String email, String code, String newPassword) async {
+  // Update password
+  Future<void> updatePassword(String newPassword) async {
     try {
-      // Verify the code (this is a placeholder; Firebase doesn't natively support code verification for password reset)
-      // You can use a custom implementation or a third-party service for code verification.
-      // For now, we'll assume the code is correct and update the password directly.
-
-      // Reauthenticate the user (if needed)
-      final user = _auth.currentUser;
-      if (user != null && user.email == email) {
+      User? user = _auth.currentUser;
+      if (user != null) {
         await user.updatePassword(newPassword);
-      } else {
-        throw FirebaseAuthException(
-          code: "invalid-user",
-          message: "Unable to update password for this user.",
-        );
       }
     } on FirebaseAuthException catch (e) {
       print("Password Update Failed: ${e.code} - ${e.message}");
-      rethrow;
-    } catch (e) {
-      print("Password Update Failed: $e");
       rethrow;
     }
   }
@@ -112,12 +179,18 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
-    await _googleSignIn.signOut(); // Sign out from Google as well
+    await _googleSignIn.signOut();
   }
 
   // Get current user
   User? getCurrentUser() {
     return _auth.currentUser;
+  }
+
+  // Check verification status
+  Future<bool> isEmailVerified() async {
+    await _auth.currentUser?.reload();
+    return _auth.currentUser?.emailVerified ?? false;
   }
 
   // Check if user is logged in
