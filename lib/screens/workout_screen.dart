@@ -74,17 +74,51 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildTopBar(),
             Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  _buildWorkoutHeader(),
-                  _buildWorkoutCategories(),
-                  _buildRecommendedWorkouts(),
-                ],
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildWorkoutHeader(),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Workout Categories',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: _workoutCategories.map((category) {
+                        return _buildCategoryItem(category);
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Recommended Workouts',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ..._recommendedWorkouts.map((workout) {
+                      return _buildWorkoutCard(workout);
+                    }).toList(),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
             _buildBottomNavBar(context),
@@ -96,23 +130,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   Widget _buildTopBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+      padding: const EdgeInsets.all(16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             'Workouts',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
           ),
           IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () {
-              // TODO: Implement notifications
-            },
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
           ),
         ],
       ),
@@ -120,73 +148,37 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   Widget _buildWorkoutHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.lightBlueAccent.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.fitness_center, color: Colors.blue, size: 40),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Track Your Progress',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[800],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Keep logging your workouts to see improvements',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.blue[700],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.lightBlueAccent.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(15),
       ),
-    );
-  }
-
-  Widget _buildWorkoutCategories() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              'Workout Categories',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: _workoutCategories.map((category) {
-                return _buildCategoryItem(category);
-              }).toList(),
+          const Icon(Icons.fitness_center, size: 40, color: Colors.blue),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Track Your Progress',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Keep logging your workouts to see improvements',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue[700],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -196,59 +188,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   Widget _buildCategoryItem(Map<String, dynamic> category) {
     return Container(
-      margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
+        color: category['color'],
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withOpacity(0.15),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
         ],
       ),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircleAvatar(
-            radius: 38,
-            backgroundColor: category['color'],
-            child: Icon(
-              category['icon'],
-              color: category['iconColor'],
-              size: 32,
-            ),
-          ),
+          Icon(category['icon'], size: 32, color: category['iconColor']),
           const SizedBox(height: 8),
           Text(
             category['name'],
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendedWorkouts() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Recommended Workouts',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...(_recommendedWorkouts.map((workout) {
-            return _buildWorkoutCard(workout);
-          }).toList()),
         ],
       ),
     );
@@ -262,22 +222,20 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 2,
+            color: Colors.grey.withOpacity(0.15),
             blurRadius: 5,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
             child: Image.asset(
               workout['image'],
               width: double.infinity,
-              height: 160,
+              height: 150,
               fit: BoxFit.cover,
             ),
           ),
@@ -288,10 +246,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               children: [
                 Text(
                   workout['title'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -305,23 +260,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: Start workout
-                  },
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
-                    elevation: 3,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    minimumSize: const Size(double.infinity, 50),
+                    minimumSize: const Size(double.infinity, 48),
                   ),
                   child: const Text(
                     'Start Workout',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -346,11 +295,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           const SizedBox(width: 4),
           Text(
             text,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -359,7 +304,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   Widget _buildBottomNavBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 4),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -382,7 +333,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: isActive ? Colors.blue[100] : Colors.transparent,
