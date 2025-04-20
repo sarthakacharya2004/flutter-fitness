@@ -148,14 +148,55 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   Widget _buildWorkoutHeader() {
+<<<<<<< HEAD
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.lightBlueAccent.withOpacity(0.2),
         borderRadius: BorderRadius.circular(15),
+=======
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.blue[50],
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.fitness_center, color: Colors.blue, size: 40),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Track Your Progress',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[800],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Keep logging your workouts to see improvements',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+>>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
       ),
       child: Row(
         children: [
+<<<<<<< HEAD
           const Icon(Icons.fitness_center, size: 40, color: Colors.blue),
           const SizedBox(width: 16),
           Expanded(
@@ -179,6 +220,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   ),
                 ),
               ],
+=======
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Workout Categories',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: _workoutCategories.map((category) {
+                return _buildCategoryItem(category);
+              }).toList(),
+>>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
             ),
           ),
         ],
@@ -188,6 +250,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   Widget _buildCategoryItem(Map<String, dynamic> category) {
     return Container(
+<<<<<<< HEAD
       decoration: BoxDecoration(
         color: category['color'],
         borderRadius: BorderRadius.circular(15),
@@ -200,10 +263,25 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         ],
       ),
       padding: const EdgeInsets.symmetric(vertical: 20),
+=======
+      margin: const EdgeInsets.only(right: 12),
+>>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+<<<<<<< HEAD
           Icon(category['icon'], size: 32, color: category['iconColor']),
+=======
+          CircleAvatar(
+            radius: 35,
+            backgroundColor: category['color'],
+            child: Icon(
+              category['icon'],
+              color: category['iconColor'],
+              size: 30,
+            ),
+          ),
+>>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
           const SizedBox(height: 8),
           Text(
             category['name'],
@@ -214,6 +292,32 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
+<<<<<<< HEAD
+=======
+  Widget _buildRecommendedWorkouts() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recommended Workouts',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...(_recommendedWorkouts.map((workout) {
+            return _buildWorkoutCard(workout);
+          }).toList()),
+        ],
+      ),
+    );
+  }
+
+>>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
   Widget _buildWorkoutCard(Map<String, dynamic> workout) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -251,20 +355,33 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _buildWorkoutInfoChip(Icons.timer_outlined, workout['duration']),
+                    _buildWorkoutInfoChip(
+                      Icons.timer_outlined, 
+                      workout['duration']
+                    ),
                     const SizedBox(width: 8),
-                    _buildWorkoutInfoChip(Icons.flash_on_outlined, workout['difficulty']),
+                    _buildWorkoutInfoChip(
+                      Icons.flash_on_outlined, 
+                      workout['difficulty']
+                    ),
                     const SizedBox(width: 8),
-                    _buildWorkoutInfoChip(Icons.local_fire_department_outlined, '${workout['calories']} Cal'),
+                    _buildWorkoutInfoChip(
+                      Icons.local_fire_department_outlined, 
+                      '${workout['calories']} Cal'
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
+<<<<<<< HEAD
                     backgroundColor: Colors.deepPurple,
+=======
+                    backgroundColor: Colors.blue,
+>>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     minimumSize: const Size(double.infinity, 48),
                   ),
@@ -332,6 +449,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   Widget _buildNavBarItem(IconData icon, bool isActive, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
+<<<<<<< HEAD
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -342,6 +460,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           icon,
           color: isActive ? Colors.blue : Colors.grey,
         ),
+=======
+      child: Icon(
+        icon,
+        color: isActive ? Colors.black : Colors.grey,
+>>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
       ),
     );
   }
