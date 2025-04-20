@@ -12,9 +12,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool showWeekly = false; // Toggle state for Today/Weekly
+  bool showWeekly = false;
+  int _waterIntake = 0;
+  final int _waterGoal = 2000;
+  bool _goalMet = false;
 
-  // Daily Nutrition Stats
   final Map<String, int> dailyStats = {
     'Calories': 2600,
     'Protein': 180,
@@ -22,11 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
     'Fat': 80,
   };
 
-  // Workout Goals
   final List<Map<String, dynamic>> workoutGoals = [
     {'title': 'Push-ups', 'reps': '50 reps', 'icon': Icons.fitness_center},
     {'title': 'Running', 'reps': '5 km', 'icon': Icons.directions_run},
-    {'title': 'Jump Rope', 'reps': '10 min', 'icon': Icons.sports_kabaddi},
     {'title': 'Squats', 'reps': '30 reps', 'icon': Icons.accessibility_new},
   ];
 
@@ -36,19 +36,28 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTopBar(context),
+            // Header Section
+            _buildHeaderSection(context),
+
+            // Main Content
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildNutritionStats(),
-                    _buildWorkoutSection(),
+                    // Nutrition Section
+                    _buildNutritionSection(),
+
+                    const SizedBox(height: 16),
+
+                    // Water & Workout Section
+                    _buildWaterWorkoutSection(),
                   ],
                 ),
               ),
             ),
+
+            // Bottom Navigation
             _buildBottomNavBar(context),
           ],
         ),
@@ -56,88 +65,252 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
+  // ====================== Section Builders ======================
+  Widget _buildHeaderSection(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align content to the left
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                  );
-                },
-                child: const CircleAvatar(
-                  backgroundImage: AssetImage('assets/profile_image.png'),
-                  radius: 25,
-                ),
+              const CircleAvatar(
+                radius: 25,
+                backgroundImage: AssetImage('assets/profile_image.png'),
               ),
-              const SizedBox(width: 10), // Add some space between the profile picture and text
+              const SizedBox(width: 12),
               const Text(
                 'Dashboard',
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
                   fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              Spacer(), // Pushes the notification icon to the far right
-              GestureDetector(
-                onTap: () {
+              const Spacer(),
+              IconButton(
+                onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const NotificationScreen()),
                   );
                 },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300, // Grey background
+                    color: Colors.grey.shade200,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.notifications,
-                    color: Colors.black,
-                  ),
+                  child: const Icon(Icons.notifications),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min, // Adjust width based on content
-                children: [
-                  _buildToggleButton('Today', !showWeekly, () {
-                    setState(() => showWeekly = false);
-                  }),
-                  _buildToggleButton('Weekly', showWeekly, () {
-                    setState(() => showWeekly = true);
-                  }),
-                ],
-              ),
+          const SizedBox(height: 16),
+          _buildTimeToggle(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeToggle() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildToggleButton('Today', !showWeekly, () {
+              setState(() => showWeekly = false);
+            }),
+            _buildToggleButton('Weekly', showWeekly, () {
+              setState(() => showWeekly = true);
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNutritionSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Nutrition',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
+          ),
+          const SizedBox(height: 12),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            childAspectRatio: 1.3,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            children: dailyStats.entries.map((entry) {
+              return _buildNutritionCard(
+                entry.key,
+                entry.value.toString(),
+                _getUnitForTitle(entry.key),
+                _getBgColor(entry.key),
+                _getTextColor(entry.key),
+              );
+            }).toList(),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildWaterWorkoutSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        children: [
+          // Water Intake Section
+          _buildWaterIntakeSection(),
+
+          const SizedBox(height: 16),
+
+          // Workout Section
+          _buildWorkoutGoalsSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWaterIntakeSection() {
+    double progress = _waterIntake / _waterGoal;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'Water Intake',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 120,
+                height: 120,
+                child: CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 12,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    _goalMet ? Colors.green : Colors.blue,
+                  ),
+                ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${_waterIntake}ml',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '/${_waterGoal}ml',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  if (_goalMet)
+                    const Text(
+                      'Goal Met!',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildWaterButton(Icons.remove, () {
+                setState(() {
+                  _waterIntake = (_waterIntake - 250).clamp(0, _waterGoal);
+                  _goalMet = _waterIntake >= _waterGoal;
+                });
+              }),
+              const SizedBox(width: 24),
+              _buildWaterButton(Icons.add, () {
+                setState(() {
+                  _waterIntake = (_waterIntake + 250).clamp(0, _waterGoal);
+                  _goalMet = _waterIntake >= _waterGoal;
+                });
+              }),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkoutGoalsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Today's Workout",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: workoutGoals.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final workout = workoutGoals[index];
+            return _buildWorkoutCard(
+              workout['title'],
+              workout['reps'],
+              workout['icon'],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // ====================== Component Builders ======================
   Widget _buildToggleButton(String text, bool isActive, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
           color: isActive ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
@@ -153,34 +326,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNutritionStats() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GridView.count(
-        shrinkWrap: true,
-        crossAxisCount: 2,
-        childAspectRatio: 1.25,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        children: dailyStats.keys.map((title) {
-          int value = showWeekly ? dailyStats[title]! * 7 : dailyStats[title]!;
-          return _buildNutritionCard(
-            title,
-            value.toString(),
-            _getUnitForTitle(title),
-            _getBgColor(title),
-            _getTextColor(title),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildNutritionCard(String title, String value, String unit, Color bgColor, Color textColor) {
+  Widget _buildNutritionCard(
+      String title, String value, String unit, Color bgColor, Color textColor) {
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -193,19 +344,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 title,
                 style: TextStyle(
                   color: textColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               Container(
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                padding: const EdgeInsets.all(8),
                 child: Icon(
                   _getIconForTitle(title),
-                  color: (title == 'Calories' || title == 'Fat') ? Colors.black : Colors.white,
+                  color: textColor,
                   size: 16,
                 ),
               ),
@@ -219,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 value,
                 style: TextStyle(
                   color: textColor,
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -227,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 unit,
                 style: TextStyle(
-                  color: const Color.fromARGB(255, 105, 105, 105),
+                  color: textColor.withOpacity(0.7),
                   fontSize: 12,
                 ),
               ),
@@ -238,48 +389,63 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildWorkoutSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Today's Workout",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          GridView.count(
-            shrinkWrap: true,
-            crossAxisCount: 2,
-            childAspectRatio: 2.5,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            children: workoutGoals.map((workout) {
-              return _buildWorkoutCard(workout['title'], workout['reps'], workout['icon']);
-            }).toList(),
-          ),
-        ],
+  Widget _buildWaterButton(IconData icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.blue),
       ),
     );
   }
 
   Widget _buildWorkoutCard(String title, String reps, IconData icon) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(16),
-      ),
       padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.black, size: 24),
-          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.black),
+          ),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(reps, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                reps,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
         ],
@@ -287,6 +453,52 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildBottomNavBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildNavButton(Icons.home_filled, true, () {}),
+          _buildNavButton(Icons.list, false, () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const NutritionScreen()));
+          }),
+          _buildNavButton(Icons.fitness_center, false, () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const WorkoutScreen()));
+          }),
+          _buildNavButton(Icons.person, false, () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()));
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavButton(IconData icon, bool isActive, VoidCallback onTap) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(
+        icon,
+        color: isActive ? Colors.black : Colors.grey,
+        size: 24,
+      ),
+    );
+  }
+
+  // ====================== Helper Methods ======================
   IconData _getIconForTitle(String title) {
     switch (title) {
       case 'Calories':
@@ -318,67 +530,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Color _getBgColor(String title) {
     switch (title) {
       case 'Calories':
-        return Colors.grey.shade200; // Calories color
+        return Colors.orange.shade50;
       case 'Protein':
-        return Colors.black; // Protein color
+        return Colors.blue.shade800;
       case 'Carbs':
-        return Colors.blue; // Carbs color
+        return Colors.green.shade600;
       case 'Fat':
-        return const Color.fromARGB(159, 111, 178, 255); // Fat color
+        return Colors.blue.shade100;
       default:
-        return Colors.blue.shade100; // Default background color
+        return Colors.grey.shade200;
     }
   }
 
   Color _getTextColor(String title) {
-    // Adjust text color for contrast
-    return title == 'Protein' || title == 'Carbs' ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 0, 0, 0);
-  }
-
-  Widget _buildBottomNavBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavBarItem(Icons.home, true, () {}),
-          _buildNavBarItem(Icons.list, false, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NutritionScreen()),
-            );
-          }),
-          _buildNavBarItem(Icons.fitness_center, false, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const WorkoutScreen()),
-            );
-          }),
-          _buildNavBarItem(Icons.person, false, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavBarItem(IconData icon, bool isActive, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isActive ? Colors.black : Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: isActive ? Colors.white : Colors.grey,
-        ),
-      ),
-    );
+    switch (title) {
+      case 'Protein':
+      case 'Carbs':
+        return Colors.white;
+      default:
+        return Colors.black;
+    }
   }
 }

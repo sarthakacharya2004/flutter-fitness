@@ -30,12 +30,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   _loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      weight = prefs.getString('weight') ?? '75'; // Default to '75' if not found
-      height = prefs.getString('height') ?? '180'; // Default to '180' if not found
+      weight =
+          prefs.getString('weight') ?? '75'; // Default to '75' if not found
+      height =
+          prefs.getString('height') ?? '180'; // Default to '180' if not found
       bmi = prefs.getString('bmi') ?? '23.1'; // Default to '23.1' if not found
       goal = prefs.getString('goal') ?? 'Build Muscle'; // Default if not found
-      name = prefs.getString('name') ?? 'Puskar Chamiya'; // Default if not found
-      description = prefs.getString('description') ?? 'Fitness Enthusiast'; // Default if not found
+      name =
+          prefs.getString('name') ?? 'Puskar Chamiya'; // Default if not found
+      description = prefs.getString('description') ??
+          'Fitness Enthusiast'; // Default if not found
     });
   }
 
@@ -162,7 +166,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Show dialog to edit name and description
   void _showEditProfileDialog() {
     TextEditingController nameController = TextEditingController(text: name);
-    TextEditingController descriptionController = TextEditingController(text: description);
+    TextEditingController descriptionController =
+        TextEditingController(text: description);
 
     showDialog(
       context: context,
@@ -179,7 +184,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: descriptionController,
-                decoration: const InputDecoration(hintText: 'Enter new description'),
+                decoration:
+                    const InputDecoration(hintText: 'Enter new description'),
               ),
             ],
           ),
@@ -323,17 +329,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         children: [
-          _buildStatCard('Weight', '$weight kg', Colors.grey.shade200, Colors.black, 'weight', Icons.accessibility),
-          _buildStatCard('Height', '$height cm', Colors.black, Colors.white, 'height', Icons.height),
-          _buildStatCard('BMI', bmi, Colors.blue, Colors.white, 'bmi', Icons.monitor_weight),
-          _buildStatCard('Goal', goal, Colors.blue.shade100, Colors.black, 'goal', Icons.flag),
+          _buildStatCard('Weight', '$weight kg', Colors.grey.shade200,
+              Colors.black, 'weight', Icons.accessibility),
+          _buildStatCard('Height', '$height cm', Colors.black, Colors.white,
+              'height', Icons.height),
+          _buildStatCard('BMI', bmi, Colors.blue, Colors.white, 'bmi',
+              Icons.monitor_weight),
+          _buildStatCard('Goal', goal, Colors.blue.shade100, Colors.black,
+              'goal', Icons.flag),
         ],
       ),
     );
   }
 
   // Stat card widget with an editable option
-  Widget _buildStatCard(String title, String value, Color bgColor, Color textColor, String type, IconData icon) {
+  Widget _buildStatCard(String title, String value, Color bgColor,
+      Color textColor, String type, IconData icon) {
     return GestureDetector(
       onTap: () {
         if (type == 'goal') {
@@ -357,7 +368,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    color: textColor == Colors.white ? Colors.white70 : Colors.grey,
+                    color: textColor == Colors.white
+                        ? Colors.white70
+                        : Colors.grey,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
