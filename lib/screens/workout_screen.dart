@@ -3,195 +3,181 @@ import 'home_screen.dart';
 import 'nutrition_screen.dart';
 import 'profile_screen.dart';
 
-class WorkoutScreen extends StatefulWidget {
+class WorkoutScreen extends StatelessWidget {
   const WorkoutScreen({super.key});
 
-  @override
-  State<WorkoutScreen> createState() => _WorkoutScreenState();
-}
+  final List<String> categories = const ['All', 'Strength', 'Cardio', 'Yoga', 'HIIT'];
 
-class _WorkoutScreenState extends State<WorkoutScreen> {
-  final List<Map<String, dynamic>> _categories = [
-    {'name': 'Strength', 'icon': Icons.fitness_center, 'colors': [Colors.red, Colors.orange]},
-    {'name': 'Cardio', 'icon': Icons.directions_run, 'colors': [Colors.blue, Colors.cyan]},
-    {'name': 'Yoga', 'icon': Icons.self_improvement, 'colors': [Colors.green, Colors.lightGreen]},
-    {'name': 'HIIT', 'icon': Icons.flash_on, 'colors': [Colors.purple, Colors.deepPurpleAccent]},
+  final List<Map<String, String>> workouts = const [
+    {
+      'title': 'Morning Stretch',
+      'duration': '15 mins',
+      'image': 'assets/yoga.png',
+    },
+    {
+      'title': 'Cardio Burn',
+      'duration': '25 mins',
+      'image': 'assets/cardio.png',
+    },
+    {
+      'title': 'Strength Focus',
+      'duration': '40 mins',
+      'image': 'assets/strength.png',
+    },
   ];
 
-  final List<Map<String, dynamic>> _featured = [
-    {'title': 'Morning Burn', 'image': 'assets/full-body.png', 'duration': '30 mins'},
-    {'title': 'Core Blaster', 'image': 'assets/core-workout.png', 'duration': '25 mins'},
-    {'title': 'Quick HIIT', 'image': 'assets/hiit-workout.png', 'duration': '20 mins'},
-  ];
-
-  void _navigateToScreen(Widget screen) {
+  void _navigate(BuildContext context, Widget screen) {
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => screen));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
+            _buildCategoryChips(),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildCategoryGrid(),
-                    const SizedBox(height: 24),
-                    Text("Featured Workouts", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    _buildFeaturedList(),
-                  ],
-                ),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: workouts.length,
+                itemBuilder: (context, index) => _buildWorkoutCard(workouts[index]),
               ),
             ),
-            _buildBottomNavBar(),
           ],
         ),
       ),
+      bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [Colors.blueAccent, Colors.lightBlueAccent]),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(25)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Welcome Back 👋', style: TextStyle(color: Colors.white70, fontSize: 16)),
-              Text('Let’s Work Out!', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          CircleAvatar(
-            radius: 24,
-            backgroundImage: AssetImage('assets/profile.jpg'), // replace with your image
-          )
+          const Text('Hello, Fit Warrior 👋',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text('You’ve burned 400 cal this week 💪',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600])),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryGrid() {
-    return GridView.builder(
-      itemCount: _categories.length,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisExtent: 120,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemBuilder: (context, index) {
-        final cat = _categories[index];
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: cat['colors']),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: cat['colors'][1].withOpacity(0.3), blurRadius: 8)],
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(cat['icon'], size: 36, color: Colors.white),
-                const SizedBox(height: 10),
-                Text(cat['name'], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFeaturedList() {
-    return SizedBox(
-      height: 180,
+  Widget _buildCategoryChips() {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _featured.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final item = _featured[index];
-          return Container(
-            width: 150,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
+          final isSelected = index == 0;
+          return Chip(
+            label: Text(categories[index]),
+            backgroundColor: isSelected ? Colors.blue[100] : Colors.grey[200],
+            labelStyle: TextStyle(
+              color: isSelected ? Colors.blue[800] : Colors.grey[700],
+              fontWeight: FontWeight.w500,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                  child: Image.asset(item['image'], height: 100, width: double.infinity, fit: BoxFit.cover),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.timer, size: 14, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(item['duration'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                        ],
-                      )
-                    ],
-                  ),
-                )
-              ],
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           );
         },
       ),
     );
   }
 
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: 2,
-      selectedItemColor: Colors.blueAccent,
-      unselectedItemColor: Colors.grey,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            _navigateToScreen(const HomeScreen());
-            break;
-          case 1:
-            _navigateToScreen(const NutritionScreen());
-            break;
-          case 2:
-            break;
-          case 3:
-            _navigateToScreen(const ProfileScreen());
-            break;
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Nutrition'),
-        BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: 'Workout'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
+  Widget _buildWorkoutCard(Map<String, String> workout) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            child: Image.asset(workout['image']!, height: 180, width: double.infinity, fit: BoxFit.cover),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(workout['title']!,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.timer, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(workout['duration']!, style: const TextStyle(color: Colors.grey)),
+                      ],
+                    )
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Start'),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNav(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey, width: 0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _navIcon(Icons.home, () => _navigate(context, const HomeScreen())),
+          _navIcon(Icons.list, () => _navigate(context, const NutritionScreen())),
+          _navIcon(Icons.fitness_center, null, active: true),
+          _navIcon(Icons.person, () => _navigate(context, const ProfileScreen())),
+        ],
+      ),
+    );
+  }
+
+  Widget _navIcon(IconData icon, VoidCallback? onTap, {bool active = false}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(
+        icon,
+        size: 28,
+        color: active ? Colors.blueAccent : Colors.grey,
+      ),
     );
   }
 }
