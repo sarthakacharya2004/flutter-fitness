@@ -2,7 +2,6 @@ import 'package:fitness_hub/screens/login_screen.dart';
 import 'package:fitness_hub/screens/signup_steps_screen.dart'; // Import the signup steps screen
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../routes/routes.dart';
 
 class SignUpScreen extends StatelessWidget {
   final AuthService _authService = AuthService();
