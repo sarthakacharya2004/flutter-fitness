@@ -61,6 +61,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         background: Image.asset(
           widget.image,
           fit: BoxFit.cover,
+          alignment: Alignment.topCenter, // subtle enhancement
         ),
       ),
       actions: [
