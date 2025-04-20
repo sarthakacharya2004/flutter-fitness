@@ -23,7 +23,7 @@ class MealDetailScreen extends StatefulWidget {
 }
 
 class _MealDetailScreenState extends State<MealDetailScreen> {
-  int _servings = 1;
+  int _servings = 1; // Placeholder for future serving adjustments
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitleSection(),
+                  _buildHeaderSection(),
                   const SizedBox(height: 16),
                   _buildNutritionSection(),
                   const SizedBox(height: 16),
@@ -52,6 +52,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
+  // AppBar with background image
   SliverAppBar _buildSliverAppBar() {
     return SliverAppBar(
       expandedHeight: 300,
@@ -65,13 +66,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.favorite_border),
-          onPressed: () {},
+          onPressed: () {
+            // TODO: Implement favorite toggle
+          },
         ),
       ],
     );
   }
 
-  Widget _buildTitleSection() {
+  // Header title and share icon
+  Widget _buildHeaderSection() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -88,39 +92,43 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         ),
         IconButton(
           icon: const Icon(Icons.share),
-          onPressed: () {},
+          onPressed: () {
+            // TODO: Implement share functionality
+          },
         ),
       ],
     );
   }
 
+  // Nutrition info like calories, time, and protein
   Widget _buildNutritionSection() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildNutritionItem(
-          Icons.local_fire_department, 
-          'Calories', 
-          widget.calories
+          Icons.local_fire_department,
+          'Calories',
+          widget.calories,
         ),
         _buildNutritionItem(
-          Icons.timer_outlined, 
-          'Time', 
-          widget.time
+          Icons.timer_outlined,
+          'Time',
+          widget.time,
         ),
         _buildNutritionItem(
-          Icons.fitness_center, 
-          'Protein', 
-          widget.protein
+          Icons.fitness_center,
+          'Protein',
+          widget.protein,
         ),
       ],
     );
   }
 
+  // Single nutrition card
   Widget _buildNutritionItem(IconData icon, String label, String value) {
     return Column(
       children: [
-        Icon(icon, color: Colors.grey[600]),
+        Icon(icon, color: Colors.grey[700]), // slightly darker icon
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 12)),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -128,6 +136,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
+  // Recipe section
   Widget _buildRecipeSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
