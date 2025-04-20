@@ -7,465 +7,191 @@ class WorkoutScreen extends StatefulWidget {
   const WorkoutScreen({super.key});
 
   @override
-  _WorkoutScreenState createState() => _WorkoutScreenState();
+  State<WorkoutScreen> createState() => _WorkoutScreenState();
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
-  final List<Map<String, dynamic>> _workoutCategories = [
-    {
-      'name': 'Strength',
-      'icon': Icons.fitness_center,
-      'color': Colors.red[100],
-      'iconColor': Colors.red,
-    },
-    {
-      'name': 'Cardio',
-      'icon': Icons.directions_run,
-      'color': Colors.blue[100],
-      'iconColor': Colors.blue,
-    },
-    {
-      'name': 'Yoga',
-      'icon': Icons.self_improvement,
-      'color': Colors.green[100],
-      'iconColor': Colors.green,
-    },
-    {
-      'name': 'HIIT',
-      'icon': Icons.timeline,
-      'color': Colors.purple[100],
-      'iconColor': Colors.purple,
-    },
+  final List<Map<String, dynamic>> _categories = [
+    {'name': 'Strength', 'icon': Icons.fitness_center, 'colors': [Colors.red, Colors.orange]},
+    {'name': 'Cardio', 'icon': Icons.directions_run, 'colors': [Colors.blue, Colors.cyan]},
+    {'name': 'Yoga', 'icon': Icons.self_improvement, 'colors': [Colors.green, Colors.lightGreen]},
+    {'name': 'HIIT', 'icon': Icons.flash_on, 'colors': [Colors.purple, Colors.deepPurpleAccent]},
   ];
 
-  final List<Map<String, dynamic>> _recommendedWorkouts = [
-    {
-      'title': 'Full Body Workout',
-      'duration': '45 mins',
-      'difficulty': 'Intermediate',
-      'image': 'assets/full-body.png',
-      'calories': 350,
-    },
-    {
-      'title': 'Core Strength',
-      'duration': '30 mins',
-      'difficulty': 'Beginner',
-      'image': 'assets/core-workout.png',
-      'calories': 250,
-    },
-    {
-      'title': 'High Intensity Interval',
-      'duration': '25 mins',
-      'difficulty': 'Advanced',
-      'image': 'assets/hiit-workout.png',
-      'calories': 400,
-    },
+  final List<Map<String, dynamic>> _featured = [
+    {'title': 'Morning Burn', 'image': 'assets/full-body.png', 'duration': '30 mins'},
+    {'title': 'Core Blaster', 'image': 'assets/core-workout.png', 'duration': '25 mins'},
+    {'title': 'Quick HIIT', 'image': 'assets/hiit-workout.png', 'duration': '20 mins'},
   ];
 
-  void _navigateToScreen(BuildContext context, Widget screen) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => screen),
-    );
+  void _navigateToScreen(Widget screen) {
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => screen));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopBar(),
+            _buildHeader(),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildWorkoutHeader(),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Workout Categories',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
+                    _buildCategoryGrid(),
+                    const SizedBox(height: 24),
+                    Text("Featured Workouts", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: _workoutCategories.map((category) {
-                        return _buildCategoryItem(category);
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Recommended Workouts',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ..._recommendedWorkouts.map((workout) {
-                      return _buildWorkoutCard(workout);
-                    }).toList(),
-                    const SizedBox(height: 20),
+                    _buildFeaturedList(),
                   ],
                 ),
               ),
             ),
-            _buildBottomNavBar(context),
+            _buildBottomNavBar(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTopBar() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [Colors.blueAccent, Colors.lightBlueAccent]),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(25)),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Workouts',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Welcome Back 👋', style: TextStyle(color: Colors.white70, fontSize: 16)),
+              Text('Let’s Work Out!', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWorkoutHeader() {
-<<<<<<< HEAD
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.lightBlueAccent.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(15),
-=======
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.blue[50],
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.fitness_center, color: Colors.blue, size: 40),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Track Your Progress',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[800],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Keep logging your workouts to see improvements',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.blue[700],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
->>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
-      ),
-      child: Row(
-        children: [
-<<<<<<< HEAD
-          const Icon(Icons.fitness_center, size: 40, color: Colors.blue),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Track Your Progress',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[800],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Keep logging your workouts to see improvements',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue[700],
-                  ),
-                ),
-              ],
-=======
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              'Workout Categories',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: _workoutCategories.map((category) {
-                return _buildCategoryItem(category);
-              }).toList(),
->>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(Map<String, dynamic> category) {
-    return Container(
-<<<<<<< HEAD
-      decoration: BoxDecoration(
-        color: category['color'],
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 20),
-=======
-      margin: const EdgeInsets.only(right: 12),
->>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-<<<<<<< HEAD
-          Icon(category['icon'], size: 32, color: category['iconColor']),
-=======
           CircleAvatar(
-            radius: 35,
-            backgroundColor: category['color'],
-            child: Icon(
-              category['icon'],
-              color: category['iconColor'],
-              size: 30,
-            ),
-          ),
->>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
-          const SizedBox(height: 8),
-          Text(
-            category['name'],
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
+            radius: 24,
+            backgroundImage: AssetImage('assets/profile.jpg'), // replace with your image
+          )
         ],
       ),
     );
   }
 
-<<<<<<< HEAD
-=======
-  Widget _buildRecommendedWorkouts() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Recommended Workouts',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...(_recommendedWorkouts.map((workout) {
-            return _buildWorkoutCard(workout);
-          }).toList()),
-        ],
+  Widget _buildCategoryGrid() {
+    return GridView.builder(
+      itemCount: _categories.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisExtent: 120,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
       ),
-    );
-  }
-
->>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
-  Widget _buildWorkoutCard(Map<String, dynamic> workout) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            blurRadius: 5,
-            offset: Offset(0, 3),
+      itemBuilder: (context, index) {
+        final cat = _categories[index];
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: cat['colors']),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: cat['colors'][1].withOpacity(0.3), blurRadius: 8)],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            child: Image.asset(
-              workout['image'],
-              width: double.infinity,
-              height: 150,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
+          child: Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  workout['title'],
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _buildWorkoutInfoChip(
-                      Icons.timer_outlined, 
-                      workout['duration']
-                    ),
-                    const SizedBox(width: 8),
-                    _buildWorkoutInfoChip(
-                      Icons.flash_on_outlined, 
-                      workout['difficulty']
-                    ),
-                    const SizedBox(width: 8),
-                    _buildWorkoutInfoChip(
-                      Icons.local_fire_department_outlined, 
-                      '${workout['calories']} Cal'
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-<<<<<<< HEAD
-                    backgroundColor: Colors.deepPurple,
-=======
-                    backgroundColor: Colors.blue,
->>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    minimumSize: const Size(double.infinity, 48),
-                  ),
-                  child: const Text(
-                    'Start Workout',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                Icon(cat['icon'], size: 36, color: Colors.white),
+                const SizedBox(height: 10),
+                Text(cat['name'], style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFeaturedList() {
+    return SizedBox(
+      height: 180,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _featured.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (context, index) {
+          final item = _featured[index];
+          return Container(
+            width: 150,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                  child: Image.asset(item['image'], height: 100, width: double.infinity, fit: BoxFit.cover),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.timer, size: 14, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(item['duration'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                        ],
+                      )
+                    ],
+                  ),
+                )
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildWorkoutInfoChip(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.black87),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 4),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavBarItem(Icons.home, false, () {
-            _navigateToScreen(context, const HomeScreen());
-          }),
-          _buildNavBarItem(Icons.list, false, () {
-            _navigateToScreen(context, const NutritionScreen());
-          }),
-          _buildNavBarItem(Icons.fitness_center, true, () {}),
-          _buildNavBarItem(Icons.person, false, () {
-            _navigateToScreen(context, const ProfileScreen());
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavBarItem(IconData icon, bool isActive, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-<<<<<<< HEAD
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: isActive ? Colors.blue[100] : Colors.transparent,
-        ),
-        child: Icon(
-          icon,
-          color: isActive ? Colors.blue : Colors.grey,
-        ),
-=======
-      child: Icon(
-        icon,
-        color: isActive ? Colors.black : Colors.grey,
->>>>>>> 5ff40a3c9c222ccefba93e7aaf05cb95421da422
-      ),
+  Widget _buildBottomNavBar() {
+    return BottomNavigationBar(
+      currentIndex: 2,
+      selectedItemColor: Colors.blueAccent,
+      unselectedItemColor: Colors.grey,
+      onTap: (index) {
+        switch (index) {
+          case 0:
+            _navigateToScreen(const HomeScreen());
+            break;
+          case 1:
+            _navigateToScreen(const NutritionScreen());
+            break;
+          case 2:
+            break;
+          case 3:
+            _navigateToScreen(const ProfileScreen());
+            break;
+        }
+      },
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Nutrition'),
+        BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: 'Workout'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      ],
     );
   }
 }
