@@ -22,8 +22,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   void initState() {
     super.initState();
     _startVerificationCheck();
+
     _auth.authStateChanges().listen((User? user) {
-      if (user != null && user.emailVerified) {
+      if (user?.emailVerified == true) {
         _navigateToNextScreen();
       }
     });
@@ -37,39 +38,33 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   void _startVerificationCheck() {
     _checkEmailVerification();
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       _checkEmailVerification();
     });
   }
 
   Future<void> _checkEmailVerification() async {
-    User? user = _auth.currentUser;
-    if (user == null) {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-      return;
-    }
-
     try {
+      User? user = _auth.currentUser;
+      if (user == null) {
+        _goToLogin();
+        return;
+      }
+
       await user.reload();
       user = _auth.currentUser;
+
       if (user != null && user.emailVerified && !_emailVerified) {
-        if (mounted) {
-          setState(() {
-            _emailVerified = true;
-            _isLoading = false;
-          });
-          _navigateToNextScreen();
-        }
+        setState(() {
+          _emailVerified = true;
+          _isLoading = false;
+        });
+        _navigateToNextScreen();
       } else {
-        if (mounted) setState(() => _isLoading = false);
+        setState(() => _isLoading = false);
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
     }
   }
 
@@ -81,23 +76,33 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     );
   }
 
+  void _goToLogin() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+
   Future<void> _resendVerificationEmail() async {
     try {
       setState(() => _isLoading = true);
       User? user = _auth.currentUser;
+
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Verification email sent again!")),
-        );
+        _showSnackBar("Verification email sent again!");
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      _showSnackBar("Error: ${e.toString()}");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -146,9 +151,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     ),
                     const SizedBox(height: 10),
                     TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      onPressed: _goToLogin,
                       child: const Text("Back to Login"),
                     ),
                   ],
