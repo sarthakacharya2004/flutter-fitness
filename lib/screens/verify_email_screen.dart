@@ -1,193 +1,71 @@
-import 'dart:async';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:fitness_hub/screens/login_screen.dart';
-import 'package:fitness_hub/screens/signup_steps_screen.dart';
-
-class VerifyEmailScreen extends StatefulWidget {
-  final String email;
-
-  const VerifyEmailScreen({super.key, required this.email});
-
-  @override
-  State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
-}
-
-class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  bool _isLoading = true;
-  late Timer _timer;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  bool _emailVerified = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _startVerificationCheck();
-    // Listen for auth state changes (for when user returns to app after verifying)
-    _auth.authStateChanges().listen((User? user) {
-      if (user != null && user.emailVerified) {
-        _navigateToNextScreen();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  void _startVerificationCheck() {
-    // Check immediately
-    _checkEmailVerification();
-    
-    // Then check every 5 seconds
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      _checkEmailVerification();
-    });
-  }
-
-  Future<void> _checkEmailVerification() async {
-    User? user = _auth.currentUser;
-
-    if (user == null) {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
-        );
-      }
-      return;
-    }
-
-    try {
-      // Force refresh the user's verification status
-      await user.reload();
-      user = _auth.currentUser;
-
-      if (user != null && user.emailVerified && !_emailVerified) {
-        if (mounted) {
-          setState(() {
-            _emailVerified = true;
-            _isLoading = false;
-          });
-          _navigateToNextScreen();
-        }
-      } else if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  void _navigateToNextScreen() {
-    _timer.cancel();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => SignupStepsScreen()),
-    );
-  }
-
-  Future<void> _resendVerificationEmail() async {
-    try {
-      setState(() => _isLoading = true);
-      User? user = _auth.currentUser;
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Verification email resent!")),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to resend email: $e")),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A1F44),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+// Commit 1
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFF121212),
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Row(
-                  children: [
-                    Icon(Icons.arrow_back, color: Colors.white),
-                    SizedBox(width: 5),
-                    Text("Back",
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                "Verify Your Email",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              const Icon(Icons.mark_email_read_outlined,
+                  size: 80, color: Colors.blue),
               const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
+              Text(
+                "Verify Your Email",
+                style: Theme.of(context)
+                    .textTheme
+                    .headline6
+                    ?.copyWith(color: Colors.black),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "A verification link was sent to:\n${widget.email}",
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black87, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Check your inbox and click the link.",
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              if (_isLoading)
+                const CircularProgressIndicator()
+              else
+                Column(
                   children: [
-                    const Icon(Icons.email_outlined, size: 60, color: Colors.blue),
-                    const SizedBox(height: 20),
-                    Text(
-                      "We've sent a verification link to ${widget.email}",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
+                    const Text("Didn't get it?"),
+                    TextButton(
+                      onPressed: _resendVerificationEmail,
+                      child: const Text("Resend Email"),
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Please check your inbox and click the link to verify your email address.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 30),
-                    if (_isLoading)
-                      const CircularProgressIndicator()
-                    else
-                      Column(
-                        children: [
-                          const Text(
-                            "Haven't received the email?",
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          TextButton(
-                            onPressed: _resendVerificationEmail,
-                            child: const Text("Resend Verification Email"),
-                          ),
-                        ],
-                      ),
                   ],
                 ),
+              const SizedBox(height: 10),
+              TextButton.icon(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text("Back"),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
