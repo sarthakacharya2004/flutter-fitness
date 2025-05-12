@@ -31,22 +31,29 @@ class _NutritionScreenState extends State<NutritionScreen> {
     _initializeNutritionPlan();
   }
 
-  Future<void> _initializeNutritionPlan() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userGoal = await _goalService.getUserGoal(user.uid);
-      setState(() {
-        if (userGoal == 'Gain Muscles') {
-          _meals = _gainMuscleNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
-        } else if (userGoal == 'Lose Weight') {
-          _meals = _loseWeightNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
-        } else {
-          _meals = _maintainNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
-        }
-        isLoading = false;
-      });
+// Modified _initializeNutritionPlan to streamline goal-based meal selection logic.
+Future<void> _initializeNutritionPlan() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final userGoal = await _goalService.getUserGoal(user.uid);
+
+    List<Map<String, dynamic>> meals;
+
+    if (userGoal == 'Gain Muscles') {
+      meals = _gainMuscleNutrition.expand((cat) => cat['meals'] as List<Map<String, dynamic>>).toList();
+    } else if (userGoal == 'Lose Weight') {
+      meals = _loseWeightNutrition.expand((cat) => cat['meals'] as List<Map<String, dynamic>>).toList();
+    } else {
+      meals = _maintainNutrition.expand((cat) => cat['meals'] as List<Map<String, dynamic>>).toList();
     }
+
+    setState(() {
+      _meals = meals;
+      isLoading = false;
+    });
   }
+}
+
 
   Future<void> _loadMeals() async {
     setState(() => isLoading = true);
