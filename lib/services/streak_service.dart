@@ -19,50 +19,32 @@ class StreakService {
     return null;
   }
 
-Future<int> getCurrentStreak() async {
-  try {
-    if (isUserLoggedIn) {
-      return await _getStreakFromFirestore();
-    } else {
-      return await _getStreakFromLocal();
+  Future<int> getCurrentStreak() async {
+    try {
+      if (isUserLoggedIn) {
+        final docSnapshot = await _streakRef!.get();
+        if (docSnapshot.exists) {
+          final data = docSnapshot.data() as Map<String, dynamic>;
+          return data['current_streak'] ?? 0;
+        } else {
+          await _streakRef!.set({
+            'current_streak': 0,
+            'daily_streak': 0,
+            'last_workout_date': null,
+            'streak_goal': _streakGoal,
+            'streak_increment': _streakIncrementValue,
+            'updated_at': FieldValue.serverTimestamp(),
+          });
+          return 0;
+        }
+      }
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt('workout_streak') ?? 0;
+    } catch (e) {
+      debugPrint('Error getting streak: $e');
+      return 0;
     }
-  } catch (e) {
-    debugPrint('Error fetching streak: $e');
-    return 0;
   }
-}
-
-Future<int> _getStreakFromFirestore() async {
-  final docSnapshot = await _streakRef?.get();
-
-  if (docSnapshot == null || !docSnapshot.exists) {
-    await _initializeStreakInFirestore();
-    return 0;
-  }
-
-  final data = docSnapshot.data() as Map<String, dynamic>?;
-
-  if (data == null) return 0;
-
-  return data['current_streak'] is int ? data['current_streak'] : 0;
-}
-
-Future<void> _initializeStreakInFirestore() async {
-  await _streakRef?.set({
-    'current_streak': 0,
-    'daily_streak': 0,
-    'last_workout_date': null,
-    'streak_goal': _streakGoal,
-    'streak_increment': _streakIncrementValue,
-    'updated_at': FieldValue.serverTimestamp(),
-  });
-}
-
-Future<int> _getStreakFromLocal() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getInt('workout_streak') ?? 0;
-}
-
 
   Future<DateTime?> getLastWorkoutDate() async {
     try {
