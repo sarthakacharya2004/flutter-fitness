@@ -858,13 +858,3 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  Widget _buildNavBarItem(IconData icon, bool isActive, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Icon(
-        icon,
-        color: isActive ? Colors.black : Colors.grey,
-      ),
-    );
-  }
-}
