@@ -445,60 +445,54 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 ),
                 
                 // Controls
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildControlButton(
-                        icon: Icons.skip_previous,
-                        onPressed: _currentExerciseIndex > 0
-                            ? () {
-                                _timer?.cancel();
-                                setState(() {
-                                  if (_isBreak) {
-                                    _isBreak = false;
-                                  } else if (_currentExerciseIndex > 0) {
-                                    _currentExerciseIndex--;
-                                  }
-                                });
-                                _startExercise();
-                              }
-                            : null,
-                      ),
-                      _buildControlButton(
-                        icon: _timer?.isActive ?? false ? Icons.pause : Icons.play_arrow,
-                        onPressed: () {
-                          if (_timer?.isActive ?? false) {
-                            _timer?.cancel();
-                          } else {
-                            _startTimer();
-                          }
-                          setState(() {});
-                        },
-                        size: 64,
-                        iconSize: 32,
-                      ),
-                      _buildControlButton(
-                        icon: Icons.skip_next,
-                        onPressed: () {
-                          _timer?.cancel();
-                          setState(() {
-                            if (_isBreak) {
-                              _isBreak = false;
-                              _currentExerciseIndex++;
-                            } else if (_currentExerciseIndex < _exercises.length - 1) {
-                              _isBreak = true;
-                            } else {
-                              _currentExerciseIndex++;
-                            }
-                          });
-                          _startExercise();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+             Padding(
+  padding: const EdgeInsets.all(16.0),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: [
+      // Previous Button
+      _buildControlButton(
+        icon: Icons.skip_previous,
+        onPressed: _currentExerciseIndex > 0
+            ? () {
+                _timer?.cancel();
+                setState(() {
+                  _isBreak = false;
+                  _currentExerciseIndex--;
+                });
+                _startExercise();
+              }
+            : null,
+      ),
+
+      // Play/Pause Button
+      _buildControlButton(
+        icon: _timer?.isActive ?? false ? Icons.pause : Icons.play_arrow,
+        onPressed: () {
+          if (_timer?.isActive ?? false) {
+            _timer?.cancel();
+          } else {
+            _startTimer();
+          }
+          setState(() {});
+        },
+        size: 64,
+        iconSize: 32,
+      ),
+
+      // Next Button
+      _buildControlButton(
+        icon: Icons.skip_next,
+        onPressed: () {
+          _timer?.cancel();
+          setState(() {
+            if (_isBreak) {
+              _isBreak = false;
+              _currentExerciseIndex++;
+            } else if (_currentExerciseIndex < _exercises.length - 1) {
+              _isBreak = true;
+            } else
+
                 
                 // Next up section
                 if (_currentExerciseIndex < _exercises.length - 1 || _isBreak)
