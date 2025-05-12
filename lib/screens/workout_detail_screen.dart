@@ -366,37 +366,33 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 ),
                 
                 // Exercise image
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _isBreak
-                      ? Container(
-                          height: 200,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.airline_seat_legroom_extra,
-                              size: 80,
-                              color: Colors.blue[300],
-                            ),
-                          ),
-                        )
-                      : Container(
-                          height: 200,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(15),
-                            image: DecorationImage(
-                              image: AssetImage(currentExercise['image']),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                ),
+               Padding(
+  padding: const EdgeInsets.all(16.0),
+  child: Container(
+    height: 200,
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: _isBreak ? Colors.blue[50] : Colors.grey[200],
+      borderRadius: BorderRadius.circular(15),
+      image: !_isBreak
+          ? DecorationImage(
+              image: AssetImage(currentExercise['image']),
+              fit: BoxFit.cover,
+            )
+          : null,
+    ),
+    child: _isBreak
+        ? Center(
+            child: Icon(
+              Icons.airline_seat_legroom_extra,
+              size: 80,
+              color: Colors.blue[300],
+            ),
+          )
+        : null,
+  ),
+),
+
                 
                 // Timer
                 Padding(
