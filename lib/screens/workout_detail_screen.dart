@@ -559,66 +559,81 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                                             : '60 seconds',
                                     style: TextStyle(
                                       color: Colors.grey[600],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+Widget _buildCompletionScreen() {
+  return Column(
+    children: [
+      _buildAppBar(),
+      Expanded(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Check icon in circle
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green,
+                    size: 80,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Title
+                const Text(
+                  'Workout Complete!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Subtitle
+                Text(
+                  'Great job! You\'ve completed the ${widget.workout['title']} workout.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[700],
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Optional: Add a button to go back or view stats
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back to Home'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                
-                SizedBox(height: 16),
+                ),
               ],
             ),
           ),
         ),
-      ],
-    );
-  }
-  
-  Widget _buildCompletionScreen() {
-    return Column(
-      children: [
-        _buildAppBar(),
-        Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_circle_outline,
-                      color: Colors.green,
-                      size: 80,
-                    ),
-                  ),
-                  SizedBox(height: 24),
-                  Text(
-                    'Workout Complete!',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Great job! You\'ve completed the ${widget.workout['title']} workout.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[700],
+      ),
+    ],
+  );
+}
+,
                     ),
                   ),
                   SizedBox(height: 24),
