@@ -46,26 +46,17 @@ class StreakService {
     }
   }
 
-  Future<DateTime?> getLastWorkoutDate() async {
+
+
+  Future<int> getDailyWorkouts() async {
     try {
-      if (isUserLoggedIn) {
-        final docSnapshot = await _streakRef!.get();
-        if (docSnapshot.exists) {
-          final data = docSnapshot.data() as Map<String, dynamic>;
-          final timestamp = data['last_workout_date'] as Timestamp?;
-          return timestamp?.toDate();
-        }
-      }
       final prefs = await SharedPreferences.getInstance();
-      final dateString = prefs.getString('last_workout_date');
-      return dateString != null ? DateTime.parse(dateString) : null;
+      return prefs.getInt('daily_workouts') ?? 0;
     } catch (e) {
-      debugPrint('Error getting last workout date: $e');
-      return null;
+      debugPrint('Error getting daily workouts: $e');
+      return 0;
     }
   }
-
-  
 
   Future<void> updateStreak({required int incrementBy}) async {
     try {
