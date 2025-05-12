@@ -75,23 +75,3 @@ class WorkoutHistoryService {
     }
   }
 
-  // Get total workout count
-  Future<int> getTotalWorkoutsCompleted() async {
-  final user = _auth.currentUser;
-  if (user == null) return 0;
-
-  try {
-    final snapshot = await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('workout_history')
-        .count()
-        .get();
-
-    return snapshot.count ?? 0; // Provide default value if count is null
-  } catch (e) {
-    debugPrint('Failed to get workout count: $e');
-    return 0; // Return 0 in case of error
-  }
-}
-}
