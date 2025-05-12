@@ -1,16 +1,23 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitness_hub/screens/forgot_password_screen.dart';
 import 'package:fitness_hub/screens/signup_screen.dart';
+import 'package:fitness_hub/screens/verify_email_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  LoginScreen({super.key});
+  bool _isPasswordVisible = false;
 
   Future<void> _login(BuildContext context) async {
     final email = _emailController.text.trim();
@@ -35,12 +42,21 @@ class LoginScreen extends StatelessWidget {
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage = "Login Failed. Please try again.";
-      if (e.code == "invalid-email") {
+      if (e.code == "email-not-verified") {
+        // Redirect to email verification screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerifyEmailScreen(email: email),
+          ),
+        );
+        return;
+      } else if (e.code == "invalid-email") {
         errorMessage = "Invalid email address.";
       } else if (e.code == "user-not-found") {
-        errorMessage = "No user found with this email.";
+        errorMessage = "Account doesn't exist. Please sign up.";
       } else if (e.code == "wrong-password") {
-        errorMessage = "Incorrect password.";
+        errorMessage = "Incorrect password. Please try again.";
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
@@ -135,11 +151,22 @@ class LoginScreen extends StatelessWidget {
                           const SizedBox(height: 15),
                           TextField(
                             controller: _passwordController,
-                            obscureText: true,
+                            obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
                               labelText: "Password",
                               border: UnderlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),

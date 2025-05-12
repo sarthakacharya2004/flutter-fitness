@@ -1,8 +1,12 @@
+import 'package:fitness_hub/services/firestore_service.dart';
+import 'package:fitness_hub/services/goal_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
 import 'workout_screen.dart';
 import 'meal_detail_screen.dart';
+import 'add_meal_screen.dart';
 
 class NutritionScreen extends StatefulWidget {
   const NutritionScreen({super.key});
@@ -12,282 +16,277 @@ class NutritionScreen extends StatefulWidget {
 }
 
 class _NutritionScreenState extends State<NutritionScreen> {
-  int _currentPage = 0;
+  final int _currentPage = 0;
   String _selectedCategory = 'All';
+  final FirestoreService _firestoreService = FirestoreService();
+  final GoalService _goalService = GoalService();
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _meals = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMeals();
+    _initializeNutritionPlan();
+  }
+
+  Future<void> _initializeNutritionPlan() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userGoal = await _goalService.getUserGoal(user.uid);
+      setState(() {
+        if (userGoal == 'Gain Muscles') {
+          _meals = _gainMuscleNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
+        } else if (userGoal == 'Lose Weight') {
+          _meals = _loseWeightNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
+        } else {
+          _meals = _maintainNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
+        }
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadMeals() async {
+    setState(() => isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userGoal = await _goalService.getUserGoal(user.uid);
+        
+        // Get goal-specific meals
+        List<Map<String, dynamic>> goalMeals;
+        if (userGoal == 'Gain Muscles') {
+          goalMeals = _gainMuscleNutrition.expand((category) => 
+            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
+              ...meal,
+              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
+            })
+          ).toList();
+        } else if (userGoal == 'Lose Weight') {
+          goalMeals = _loseWeightNutrition.expand((category) => 
+            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
+              ...meal,
+              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
+            })
+          ).toList();
+        } else {
+          goalMeals = _maintainNutrition.expand((category) => 
+            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
+              ...meal,
+              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
+            })
+          ).toList();
+        }
+        
+        // Combine with default meals and update state
+        setState(() {
+          _meals = [...goalMeals, ..._defaultMeals];
+        });
+      } else {
+        setState(() {
+          _meals = _defaultMeals;
+        });
+      }
+    } catch (e) {
+      print('Error loading meals: $e');
+      setState(() {
+        _meals = _defaultMeals;
+      });
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
 
   final List<Map<String, dynamic>> _dietCategories = [
+    {'name': 'All', 'icon': Icons.all_inclusive, 'description': 'All Meal Types'},
+    {'name': 'Vegetarian', 'icon': Icons.grass, 'description': 'Plant-Based Meals'},
+    {'name': 'Protein', 'icon': Icons.fitness_center, 'description': 'High Protein Diets'},
+    {'name': 'Low Carb', 'icon': Icons.food_bank, 'description': 'Low Carbohydrate Meals'},
+    {'name': 'Keto', 'icon': Icons.local_pizza, 'description': 'Ketogenic Diet Meals'},
+    {'name': 'Vegan', 'icon': Icons.eco, 'description': 'Plant-Based No Animal Products'},
+  ];
+
+  // Default meals for each category
+  final List<Map<String, dynamic>> _defaultMeals = [
+    // Vegetarian meals
     {
-      'name': 'All',
-      'icon': Icons.all_inclusive,
-      'description': 'All Meal Types'
+      'id': 'veg1',
+      'title': 'Vegetable Stir Fry',
+      'calories': '320 kcal',
+      'time': '15 min',
+      'protein': '12g protein',
+      'category': 'Vegetarian',
+      'image': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+      'recipe': '1. Heat oil in a pan\n2. Add vegetables\n3. Stir fry for 10 minutes\n4. Add sauce and serve'
     },
+    // ... rest of your _defaultMeals list (keep all existing entries)
+  ];
+
+  // Goal-specific nutrition plans
+  final List<Map<String, dynamic>> _gainMuscleNutrition = [
     {
-      'name': 'Vegetarian',
-      'icon': Icons.grass,
-      'description': 'Plant-Based Meals'
-    },
-    {
-      'name': 'Protein',
+      'name': 'High Protein',
       'icon': Icons.fitness_center,
-      'description': 'High Protein Diets'
+      'description': 'Meals rich in protein to support muscle growth',
+      'meals': [
+        {
+          'title': 'Grilled Chicken Breast',
+          'calories': '300 kcal',
+          'time': '20 min',
+          'protein': '40g',
+          'image': 'assets/grilled-chicken.png',
+          'recipe': '1. Season chicken\n2. Grill for 8 mins per side\n3. Rest and serve',
+          'category': 'Protein'
+        },
+        {
+          'title': 'Quinoa Salad',
+          'calories': '250 kcal',
+          'time': '15 min',
+          'protein': '12g',
+          'image': 'assets/quinoa-salad.png',
+          'recipe': '1. Cook quinoa\n2. Mix with vegetables\n3. Add dressing and serve',
+          'category': 'Protein'
+        },
+      ],
     },
+    {
+      'name': 'Balanced Diet',
+      'icon': Icons.restaurant,
+      'description': 'Balanced meals for muscle gain',
+      'meals': [
+        {
+          'title': 'Steak and Veggies',
+          'calories': '500 kcal',
+          'time': '30 min',
+          'protein': '35g',
+          'image': 'assets/steak-veggies.png',
+          'recipe': '1. Cook steak\n2. Steam vegetables\n3. Serve together',
+          'category': 'Protein'
+        },
+        {
+          'title': 'Omelette',
+          'calories': '200 kcal',
+          'time': '10 min',
+          'protein': '15g',
+          'image': 'assets/omelette.png',
+          'recipe': '1. Beat eggs\n2. Cook in pan\n3. Add cheese and serve',
+          'category': 'Protein'
+        },
+      ],
+    },
+  ];
+
+  final List<Map<String, dynamic>> _loseWeightNutrition = [
     {
       'name': 'Low Carb',
       'icon': Icons.food_bank,
-      'description': 'Low Carbohydrate Meals'
+      'description': 'Meals low in carbohydrates',
+      'meals': [
+        {
+          'title': 'Cauliflower Rice',
+          'calories': '180 kcal',
+          'time': '15 min',
+          'protein': '6g',
+          'image': 'assets/cauliflower-rice.png',
+          'recipe': '1. Grate cauliflower\n2. Saute with oil\n3. Season and serve',
+          'category': 'Low Carb'
+        },
+        {
+          'title': 'Zucchini Noodles',
+          'calories': '150 kcal',
+          'time': '10 min',
+          'protein': '5g',
+          'image': 'assets/zucchini-noodles.png',
+          'recipe': '1. Spiralize zucchini\n2. Saute briefly\n3. Add sauce and serve',
+          'category': 'Low Carb'
+        },
+      ],
     },
     {
       'name': 'Keto',
       'icon': Icons.local_pizza,
-      'description': 'Ketogenic Diet Meals'
-    },
-    {
-      'name': 'Vegan',
-      'icon': Icons.eco,
-      'description': 'Plant-Based No Animal Products'
-    },
-  ];
-
-  final List<Map<String, String>> _allMeals = [
-    // Vegetarian Meals
-    {
-      "title": "Quinoa Salad with Roasted Veggies",
-      "calories": "430 kcal",
-      "time": "30 minutes",
-      "protein": "18g protein",
-      "image": "assets/quinoa-salad.png",
-      "recipe": "1. Cook the quinoa.\n2. Roast the veggies.\n3. Mix them together with dressing.",
-      "category": "Vegetarian"
-    },
-    {
-      "title": "Spinach and Mushroom Frittata",
-      "calories": "320 kcal",
-      "time": "25 minutes",
-      "protein": "22g protein",
-      "image": "assets/vegetarian-frittata.png",
-      "recipe": "1. Whisk eggs.\n2. Sauté spinach and mushrooms.\n3. Bake in the oven until set.",
-      "category": "Vegetarian"
-    },
-    {
-      "title": "Vegetable Stir-Fry with Tofu",
-      "calories": "380 kcal",
-      "time": "20 minutes",
-      "protein": "20g protein",
-      "image": "assets/tofu-stir-fry.png",
-      "recipe": "1. Press tofu.\n2. Chop vegetables.\n3. Stir-fry with soy sauce.",
-      "category": "Vegetarian"
-    },
-    {
-      "title": "Greek Salad with Feta",
-      "calories": "290 kcal",
-      "time": "15 minutes",
-      "protein": "12g protein",
-      "image": "assets/greek-salad.png",
-      "recipe": "1. Chop cucumbers, tomatoes, and onions.\n2. Add olives and feta.\n3. Dress with olive oil and herbs.",
-      "category": "Vegetarian"
-    },
-    {
-      "title": "Vegetable Lasagna",
-      "calories": "450 kcal",
-      "time": "45 minutes",
-      "protein": "25g protein",
-      "image": "assets/vegetable-lasagna.png",
-      "recipe": "1. Layer lasagna sheets.\n2. Add vegetable sauce.\n3. Top with cheese.\n4. Bake until golden.",
-      "category": "Vegetarian"
-    },
-
-    // Protein Meals
-    {
-      "title": "Grilled Chicken with Brown Rice",
-      "calories": "620 kcal",
-      "time": "40 minutes",
-      "protein": "55g protein",
-      "image": "assets/grilled-chicken.png",
-      "recipe": "1. Grill the chicken.\n2. Cook the brown rice.\n3. Serve with steamed vegetables.",
-      "category": "Protein"
-    },
-    {
-      "title": "Salmon with Quinoa",
-      "calories": "500 kcal",
-      "time": "35 minutes",
-      "protein": "45g protein",
-      "image": "assets/salmon-quinoa.png",
-      "recipe": "1. Bake salmon.\n2. Cook quinoa.\n3. Serve with lemon and herbs.",
-      "category": "Protein"
-    },
-    {
-      "title": "Beef Stir-Fry",
-      "calories": "550 kcal",
-      "time": "25 minutes",
-      "protein": "50g protein",
-      "image": "assets/beef-stir-fry.png",
-      "recipe": "1. Slice beef.\n2. Stir-fry with vegetables.\n3. Add soy sauce and spices.",
-      "category": "Protein"
-    },
-    {
-      "title": "Turkey Meatballs",
-      "calories": "400 kcal",
-      "time": "30 minutes",
-      "protein": "40g protein",
-      "image": "assets/turkey-meatballs.png",
-      "recipe": "1. Mix ground turkey.\n2. Form meatballs.\n3. Bake or pan-fry.\n4. Serve with sauce.",
-      "category": "Protein"
-    },
-    {
-      "title": "Shrimp and Egg White Scramble",
-      "calories": "350 kcal",
-      "time": "20 minutes",
-      "protein": "45g protein",
-      "image": "assets/shrimp-scramble.png",
-      "recipe": "1. Scramble egg whites.\n2. Sauté shrimp.\n3. Combine and season.",
-      "category": "Protein"
-    },
-
-    // Low Carb Meals
-    {
-      "title": "Cauliflower Rice Bowl",
-      "calories": "320 kcal",
-      "time": "25 minutes",
-      "protein": "20g protein",
-      "image": "assets/cauliflower-rice.png",
-      "recipe": "1. Rice cauliflower.\n2. Sauté with vegetables.\n3. Top with protein.",
-      "category": "Low Carb"
-    },
-    {
-      "title": "Zucchini Noodle Carbonara",
-      "calories": "380 kcal",
-      "time": "30 minutes",
-      "protein": "25g protein",
-      "image": "assets/zucchini-noodles.png",
-      "recipe": "1. Spiralize zucchini.\n2. Make carbonara sauce.\n3. Combine and serve.",
-      "category": "Low Carb"
-    },
-    {
-      "title": "Lettuce Wrap Tacos",
-      "calories": "300 kcal",
-      "time": "20 minutes",
-      "protein": "30g protein",
-      "image": "assets/lettuce-tacos.png",
-      "recipe": "1. Cook seasoned meat.\n2. Wrap in lettuce leaves.\n3. Add toppings.",
-      "category": "Low Carb"
-    },
-    {
-      "title": "Egg and Avocado Cups",
-      "calories": "250 kcal",
-      "time": "15 minutes",
-      "protein": "15g protein",
-      "image": "assets/egg-avocado-cups.png",
-      "recipe": "1. Halve avocados.\n2. Crack eggs into avocado.\n3. Bake until set.",
-      "category": "Low Carb"
-    },
-    {
-      "title": "Stuffed Bell Peppers",
-      "calories": "350 kcal",
-      "time": "35 minutes",
-      "protein": "25g protein",
-      "image": "assets/stuffed-peppers.png",
-      "recipe": "1. Hollow bell peppers.\n2. Fill with low-carb mixture.\n3. Bake until tender.",
-      "category": "Low Carb"
-    },
-
-    // Keto Meals
-    {
-      "title": "Avocado Keto Toast",
-      "calories": "450 kcal",
-      "time": "15 minutes",
-      "protein": "15g protein",
-      "image": "assets/keto-toast.png",
-      "recipe": "1. Prepare low-carb bread.\n2. Mash avocado.\n3. Top with eggs.",
-      "category": "Keto"
-    },
-    {
-      "title": "Keto Chicken Alfredo",
-      "calories": "500 kcal",
-      "time": "30 minutes",
-      "protein": "40g protein",
-      "image": "assets/keto-chicken-alfredo.png",
-      "recipe": "1. Cook chicken.\n2. Make low-carb alfredo sauce.\n3. Serve over zucchini noodles.",
-      "category": "Keto"
-    },
-    {
-      "title": "Salmon with Cream Cheese",
-      "calories": "480 kcal",
-      "time": "25 minutes",
-      "protein": "35g protein",
-      "image": "assets/salmon-cream-cheese.png",
-      "recipe": "1. Bake salmon.\n2. Top with cream cheese.\n3. Serve with asparagus.",
-      "category": "Keto"
-    },
-    {
-      "title": "Keto Pizza Cups",
-      "calories": "400 kcal",
-      "time": "20 minutes",
-      "protein": "25g protein",
-      "image": "assets/keto-pizza-cups.png",
-      "recipe": "1. Make low-carb pizza base.\n2. Fill with toppings.\n3. Bake until crispy.",
-      "category": "Keto"
-    },
-    {
-      "title": "Bacon and Egg Cups",
-      "calories": "350 kcal",
-      "time": "20 minutes",
-      "protein": "20g protein",
-      "image": "assets/bacon-egg-cups.png",
-      "recipe": "1. Line muffin tin with bacon.\n2. Crack eggs inside.\n3. Bake until set.",
-      "category": "Keto"
-    },
-
-    // Vegan Meals
-    {
-      "title": "Tofu Stir Fry",
-      "calories": "380 kcal",
-      "time": "20 minutes",
-      "protein": "22g protein",
-      "image": "assets/tofu-stir-fry.png",
-      "recipe": "1. Press tofu.\n2. Stir fry with vegetables.\n3. Add soy sauce.",
-      "category": "Vegan"
-    },
-    {
-      "title": "Chickpea Curry",
-      "calories": "420 kcal",
-      "time": "35 minutes",
-      "protein": "20g protein",
-      "image": "assets/chickpea-curry.png",
-      "recipe": "1. Sauté onions and spices.\n2. Add chickpeas.\n3. Simmer in coconut milk.",
-      "category": "Vegan"
-    },
-    {
-      "title": "Lentil Bolognese",
-      "calories": "350 kcal",
-      "time": "40 minutes",
-      "protein": "25g protein",
-      "image": "assets/lentil-bolognese.png",
-      "recipe": "1. Cook lentils.\n2. Make tomato sauce.\n3. Serve over zucchini noodles.",
-      "category": "Vegan"
-    },
-    {
-      "title": "Buddha Bowl",
-      "calories": "400 kcal",
-      "time": "25 minutes",
-      "protein": "18g protein",
-      "image": "assets/buddha-bowl.png",
-      "recipe": "1. Roast vegetables.\n2. Cook quinoa.\n3. Add tahini dressing.",
-      "category": "Vegan"
-    },
-    {
-      "title": "Vegan Sushi Rolls",
-      "calories": "320 kcal",
-      "time": "30 minutes",
-      "protein": "15g protein",
-      "image": "assets/vegan-sushi.png",
-      "recipe": "1. Prepare sushi rice.\n2. Fill with vegetables.\n3. Roll and slice.",
-      "category": "Vegan"
+      'description': 'Ketogenic diet meals',
+      'meals': [
+        {
+          'title': 'Bacon & Eggs',
+          'calories': '400 kcal',
+          'time': '15 min',
+          'protein': '20g',
+          'image': 'assets/bacon-eggs.png',
+          'recipe': '1. Cook bacon\n2. Fry eggs\n3. Serve together',
+          'category': 'Keto'
+        },
+        {
+          'title': 'Cheese Omelette',
+          'calories': '350 kcal',
+          'time': '10 min',
+          'protein': '25g',
+          'image': 'assets/cheese-omelette.png',
+          'recipe': '1. Beat eggs\n2. Add cheese\n3. Cook in pan\n4. Fold and serve',
+          'category': 'Keto'
+        },
+      ],
     },
   ];
 
-  List<Map<String, String>> _filteredMeals() {
-    if (_selectedCategory == 'All') return _allMeals;
-    return _allMeals.where((meal) => meal['category'] == _selectedCategory).toList();
+  final List<Map<String, dynamic>> _maintainNutrition = [
+    {
+      'name': 'Balanced',
+      'icon': Icons.restaurant,
+      'description': 'Balanced meals for maintenance',
+      'meals': [
+        {
+          'title': 'Chicken Salad',
+          'calories': '350 kcal',
+          'time': '20 min',
+          'protein': '30g',
+          'image': 'assets/chicken-salad.png',
+          'recipe': '1. Grill chicken\n2. Mix with salad\n3. Add dressing and serve',
+          'category': 'Balanced'
+        },
+        {
+          'title': 'Fish & Veggies',
+          'calories': '400 kcal',
+          'time': '25 min',
+          'protein': '35g',
+          'image': 'assets/fish-veggies.png',
+          'recipe': '1. Cook fish\n2. Steam vegetables\n3. Serve together',
+          'category': 'Balanced'
+        },
+      ],
+    },
+    {
+      'name': 'Mediterranean',
+      'icon': Icons.local_dining,
+      'description': 'Mediterranean diet meals',
+      'meals': [
+        {
+          'title': 'Greek Salad',
+          'calories': '250 kcal',
+          'time': '15 min',
+          'protein': '10g',
+          'image': 'assets/greek-salad.png',
+          'recipe': '1. Mix vegetables\n2. Add feta cheese\n3. Drizzle with olive oil',
+          'category': 'Mediterranean'
+        },
+        {
+          'title': 'Lentil Soup',
+          'calories': '300 kcal',
+          'time': '30 min',
+          'protein': '20g',
+          'image': 'assets/lentil-soup.png',
+          'recipe': '1. Cook lentils\n2. Add vegetables\n3. Simmer and serve',
+          'category': 'Mediterranean'
+        },
+      ],
+    },
+  ];
+
+  List<Map<String, dynamic>> _filteredMeals(List<Map<String, dynamic>> meals) {
+    if (_selectedCategory == 'All') return meals;
+    return meals.where((meal) => meal['category'] == _selectedCategory).toList();
   }
 
   void _navigateToScreen(BuildContext context, Widget screen) {
@@ -296,250 +295,312 @@ class _NutritionScreenState extends State<NutritionScreen> {
     );
   }
 
+  void _navigateToAddMeal() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddMealScreen()),
+    );
+    
+    if (result == true) {
+      _loadMeals(); // Refresh the meals list
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    List<Map<String, String>> filteredMeals = _filteredMeals();
-
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F8FA),
+      appBar: AppBar(
+        title: const Text('Browse Meals'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _navigateToAddMeal,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopBar(context),
-            const SizedBox(height: 16),
-            _buildSearchBar(),
-            const SizedBox(height: 16),
-            _buildMealCategories(),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '$_selectedCategory Meals',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '${filteredMeals.length} recipes',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredMeals.length,
-                itemBuilder: (context, index) {
-                  final meal = filteredMeals[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                    child: _buildMealCard(
-                      title: meal["title"]!,
-                      calories: meal["calories"]!,
-                      time: meal["time"]!,
-                      protein: meal["protein"]!,
-                      image: meal["image"]!,
-                      recipe: meal["recipe"]!,
-                    ),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _firestoreService.getMeals(),
+                builder: (context, snapshot) {
+                  List<Map<String, dynamic>> meals = _meals;
+                  
+                  if (snapshot.connectionState == ConnectionState.waiting && _meals.isEmpty) {
+                    meals = _defaultMeals;
+                  } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    meals = [..._meals, ...snapshot.data!];
+                  }
+                  
+                  final filteredMeals = _filteredMeals(meals);
+                  
+                  return CustomScrollView(
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverToBoxAdapter(
+                          child: _buildSearchBar(),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        sliver: SliverToBoxAdapter(
+                          child: _buildMealCategories(),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverGrid(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 0.75,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => _buildMealCard(
+                              meal: filteredMeals[index],
+                            ),
+                            childCount: filteredMeals.length,
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
             ),
-            _buildBottomNavBar(context),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTopBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.pop(context),
-                padding: EdgeInsets.zero,
-                alignment: Alignment.centerLeft,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Browse Meals',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Explore and log curated meals from us',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+      bottomNavigationBar: _buildBottomNavBar(context),
     );
   }
 
   Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: TextField(
+        controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Search for a meal...',
-          prefixIcon: Icon(Icons.search, color: Colors.grey),
-          suffixIcon: Icon(Icons.tune, color: Colors.grey),
-          hintStyle: TextStyle(color: Colors.grey),
-          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          filled: true,
-          fillColor: Colors.grey[100],
+          prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
+          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         ),
       ),
     );
   }
 
   Widget _buildMealCategories() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: _dietCategories.map((category) {
+    return SizedBox(
+      height: 110,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _dietCategories.length,
+        itemBuilder: (context, index) {
+          final category = _dietCategories[index];
           bool isSelected = _selectedCategory == category['name'];
-          return Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedCategory = category['name'];
-                });
-              },
+          
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedCategory = category['name'];
+              });
+            },
+            child: Container(
+              width: 90,
+              margin: const EdgeInsets.only(right: 16),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: isSelected 
-                      ? Colors.green.withOpacity(0.4) 
-                      : Colors.green.withOpacity(0.2),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: 70,
+                    width: 70,
+                    decoration: BoxDecoration(
+                      color: isSelected 
+                        ? Colors.blue 
+                        : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isSelected 
+                            ? Colors.blue.withOpacity(0.3) 
+                            : Colors.grey.withOpacity(0.1),
+                          spreadRadius: isSelected ? 2 : 1,
+                          blurRadius: isSelected ? 8 : 3,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
                     child: Icon(
                       category['icon'],
-                      color: isSelected ? Colors.white : Colors.green,
+                      color: isSelected ? Colors.white : Colors.blue,
                       size: 30,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     category['name'],
                     style: TextStyle(
-                      fontSize: 12,
-                      color: isSelected ? Colors.green : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.blue : Colors.grey.shade700,
                     ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
 
-  Widget _buildMealCard({
-    required String title,
-    required String calories,
-    required String time,
-    required String protein,
-    required String image,
-    required String recipe,
-  }) {
+  Widget _buildMealCard({required Map<String, dynamic> meal}) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => MealDetailScreen(
-              title: title,
-              calories: calories,
-              time: time,
-              protein: protein,
-              image: image,
-              recipe: recipe,
+              mealId: meal['id'] ?? '',
+              title: meal['title'] ?? 'No title',
+              calories: meal['calories'] ?? '0 kcal',
+              time: meal['time'] ?? '0 minutes',
+              protein: meal['protein'] ?? '0g protein',
+              image: meal['image'] ?? 'assets/default-meal.png',
+              recipe: meal['recipe'] ?? 'No recipe provided',
             ),
           ),
         );
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
           color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 2,
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
               blurRadius: 5,
-              offset: const Offset(0, 3),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-              child: Image.asset(
-                image,
-                width: double.infinity,
-                height: 160,
-                fit: BoxFit.cover,
+            // Image container
+            Expanded(
+              flex: 3,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  image: DecorationImage(
+                    image: NetworkImage(meal['image'] ?? ''),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          Icons.favorite_border,
+                          color: Colors.red,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.local_fire_department,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              meal['calories'] ?? '0 kcal',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+            // Text content
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      meal['title'] ?? 'No title',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildNutritionChip(Icons.local_fire_department, calories),
-                        const SizedBox(width: 5),
-                        _buildNutritionChip(Icons.timer, time),
-                        const SizedBox(width: 5),
-                        _buildNutritionChip(Icons.fitness_center, protein),
+                        _buildIconText(Icons.timer_outlined, meal['time'] ?? '0 min'),
+                        _buildIconText(Icons.fitness_center, meal['protein']?.split(' ')[0] ?? '0g'),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -548,31 +609,28 @@ class _NutritionScreenState extends State<NutritionScreen> {
     );
   }
 
-  Widget _buildNutritionChip(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: Colors.black87),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
+  Widget _buildIconText(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 12,
+          color: Colors.grey.shade600,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey.shade700,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
+  // Bottom navigation bar widget
   Widget _buildBottomNavBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -582,7 +640,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
           _buildNavBarItem(Icons.home, false, () {
             _navigateToScreen(context, const HomeScreen());
           }),
-          _buildNavBarItem(Icons.list, true, () {}),
+          _buildNavBarItem(Icons.restaurant_menu, true, () {}),
           _buildNavBarItem(Icons.fitness_center, false, () {
             _navigateToScreen(context, const WorkoutScreen());
           }),
@@ -594,13 +652,42 @@ class _NutritionScreenState extends State<NutritionScreen> {
     );
   }
 
+  // Navigation bar item widget
   Widget _buildNavBarItem(IconData icon, bool isActive, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Icon(
-        icon,
-        color: isActive ? Colors.black : Colors.grey,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.black : Colors.transparent,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: isActive ? Colors.white : Colors.grey,
+        ),
       ),
     );
   }
+
+Future<void> _loadNutrition() async {
+  setState(() => isLoading = true);
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userGoal = await _goalService.getUserGoal(user.uid);
+      if (userGoal == 'Gain Muscles') {
+        _meals = _gainMuscleNutrition;
+      } else if (userGoal == 'Lose Weight') {
+        _meals = _loseWeightNutrition;
+      } else {
+        _meals = _maintainNutrition;
+      }
+    }
+  } catch (e) {
+    print('Error loading nutrition: $e');
+  } finally {
+    setState(() => isLoading = false);
+  }
+}
 }
