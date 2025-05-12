@@ -181,7 +181,18 @@ class StreakService {
       }
     }
     
-    
+    return {
+      'current_streak': currentStreak,
+      'daily_streak': dailyStreak,
+      'total_streak': totalStreak,
+      'streak_goal': _streakGoal,
+      'streak_increment': _streakIncrementValue,
+      'progress_percentage': _streakGoal > 0
+          ? ((currentStreak % _streakGoal) / _streakGoal * 100)
+          : 0,
+      'total_goals_reached': (currentStreak / _streakGoal).floor(),
+    };
+  }
 
   Future<void> resetStreak() async {
     try {
