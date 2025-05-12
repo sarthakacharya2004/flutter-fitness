@@ -2,7 +2,7 @@ name: fitness_hub
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: "none" # Remove this line if you wish to publish to pub.dev
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -35,18 +35,23 @@ dependencies:
   flutter_svg: ^2.0.10 # If your design has SVG images
   provider: ^6.1.2 # State management
   path_provider: ^2.1.5
-  firebase_core: ^3.12.1
   firebase_auth: ^5.5.1
   google_sign_in: ^6.2.2
   # flutter_facebook_auth: ^6.1.0
   # sign_in_with_apple: ^5.0.0
   fl_chart: ^0.63.0
-  cloud_firestore: 5.6.5
   shared_preferences: ^2.0.15
+  image_picker: ^1.0.4 # For selecting images from gallery/camera
+  cached_network_image: ^3.2.3 # For efficient image loading
+  firebase_storage: ^12.4.4
+  cloud_firestore: ^5.6.5
+  firebase_core: ^3.12.1
+  flutter_gif: 0.0.4
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutterfire_cli: ^1.2.0
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +69,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -78,6 +84,8 @@ flutter:
     - assets/full-body.png
     - assets/core-workout.png
     - assets/hiit-workout.png
+    - assets/gifs/pushups.gif
+    - assets/gifs/squats.gif
 
   # To add assets to your application, add an assets section, like this:
   # assets:
