@@ -65,15 +65,7 @@ class StreakService {
     }
   }
 
-  Future<int> getDailyWorkouts() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getInt('daily_workouts') ?? 0;
-    } catch (e) {
-      debugPrint('Error getting daily workouts: $e');
-      return 0;
-    }
-  }
+  
 
   Future<void> updateStreak({required int incrementBy}) async {
     try {
