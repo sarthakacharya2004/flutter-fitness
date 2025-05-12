@@ -366,33 +366,37 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 ),
                 
                 // Exercise image
-               Padding(
-  padding: const EdgeInsets.all(16.0),
-  child: Container(
-    height: 200,
-    width: double.infinity,
-    decoration: BoxDecoration(
-      color: _isBreak ? Colors.blue[50] : Colors.grey[200],
-      borderRadius: BorderRadius.circular(15),
-      image: !_isBreak
-          ? DecorationImage(
-              image: AssetImage(currentExercise['image']),
-              fit: BoxFit.cover,
-            )
-          : null,
-    ),
-    child: _isBreak
-        ? Center(
-            child: Icon(
-              Icons.airline_seat_legroom_extra,
-              size: 80,
-              color: Colors.blue[300],
-            ),
-          )
-        : null,
-  ),
-),
-
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: _isBreak
+                      ? Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.airline_seat_legroom_extra,
+                              size: 80,
+                              color: Colors.blue[300],
+                            ),
+                          ),
+                        )
+                      : Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(15),
+                            image: DecorationImage(
+                              image: AssetImage(currentExercise['image']),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                ),
                 
                 // Timer
                 Padding(
@@ -445,54 +449,60 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 ),
                 
                 // Controls
-             Padding(
-  padding: const EdgeInsets.all(16.0),
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-    children: [
-      // Previous Button
-      _buildControlButton(
-        icon: Icons.skip_previous,
-        onPressed: _currentExerciseIndex > 0
-            ? () {
-                _timer?.cancel();
-                setState(() {
-                  _isBreak = false;
-                  _currentExerciseIndex--;
-                });
-                _startExercise();
-              }
-            : null,
-      ),
-
-      // Play/Pause Button
-      _buildControlButton(
-        icon: _timer?.isActive ?? false ? Icons.pause : Icons.play_arrow,
-        onPressed: () {
-          if (_timer?.isActive ?? false) {
-            _timer?.cancel();
-          } else {
-            _startTimer();
-          }
-          setState(() {});
-        },
-        size: 64,
-        iconSize: 32,
-      ),
-
-      // Next Button
-      _buildControlButton(
-        icon: Icons.skip_next,
-        onPressed: () {
-          _timer?.cancel();
-          setState(() {
-            if (_isBreak) {
-              _isBreak = false;
-              _currentExerciseIndex++;
-            } else if (_currentExerciseIndex < _exercises.length - 1) {
-              _isBreak = true;
-            } else
-
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildControlButton(
+                        icon: Icons.skip_previous,
+                        onPressed: _currentExerciseIndex > 0
+                            ? () {
+                                _timer?.cancel();
+                                setState(() {
+                                  if (_isBreak) {
+                                    _isBreak = false;
+                                  } else if (_currentExerciseIndex > 0) {
+                                    _currentExerciseIndex--;
+                                  }
+                                });
+                                _startExercise();
+                              }
+                            : null,
+                      ),
+                      _buildControlButton(
+                        icon: _timer?.isActive ?? false ? Icons.pause : Icons.play_arrow,
+                        onPressed: () {
+                          if (_timer?.isActive ?? false) {
+                            _timer?.cancel();
+                          } else {
+                            _startTimer();
+                          }
+                          setState(() {});
+                        },
+                        size: 64,
+                        iconSize: 32,
+                      ),
+                      _buildControlButton(
+                        icon: Icons.skip_next,
+                        onPressed: () {
+                          _timer?.cancel();
+                          setState(() {
+                            if (_isBreak) {
+                              _isBreak = false;
+                              _currentExerciseIndex++;
+                            } else if (_currentExerciseIndex < _exercises.length - 1) {
+                              _isBreak = true;
+                            } else {
+                              _currentExerciseIndex++;
+                            }
+                          });
+                          _startExercise();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
                 
                 // Next up section
                 if (_currentExerciseIndex < _exercises.length - 1 || _isBreak)
@@ -559,81 +569,66 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                                             : '60 seconds',
                                     style: TextStyle(
                                       color: Colors.grey[600],
-Widget _buildCompletionScreen() {
-  return Column(
-    children: [
-      _buildAppBar(),
-      Expanded(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Check icon in circle
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.green,
-                    size: 80,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Title
-                const Text(
-                  'Workout Complete!',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Subtitle
-                Text(
-                  'Great job! You\'ve completed the ${widget.workout['title']} workout.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[700],
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Optional: Add a button to go back or view stats
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back to Home'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                
+                SizedBox(height: 16),
               ],
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
-,
+      ],
+    );
+  }
+  
+  Widget _buildCompletionScreen() {
+    return Column(
+      children: [
+        _buildAppBar(),
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.green,
+                      size: 80,
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    'Workout Complete!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Great job! You\'ve completed the ${widget.workout['title']} workout.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[700],
                     ),
                   ),
                   SizedBox(height: 24),
