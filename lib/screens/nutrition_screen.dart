@@ -31,76 +31,73 @@ class _NutritionScreenState extends State<NutritionScreen> {
     _initializeNutritionPlan();
   }
 
-// Modified _initializeNutritionPlan to streamline goal-based meal selection logic.
-Future<void> _initializeNutritionPlan() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    final userGoal = await _goalService.getUserGoal(user.uid);
-
-    List<Map<String, dynamic>> meals;
-
-    if (userGoal == 'Gain Muscles') {
-      meals = _gainMuscleNutrition.expand((cat) => cat['meals'] as List<Map<String, dynamic>>).toList();
-    } else if (userGoal == 'Lose Weight') {
-      meals = _loseWeightNutrition.expand((cat) => cat['meals'] as List<Map<String, dynamic>>).toList();
-    } else {
-      meals = _maintainNutrition.expand((cat) => cat['meals'] as List<Map<String, dynamic>>).toList();
-    }
-
-    setState(() {
-      _meals = meals;
-      isLoading = false;
-    });
-  }
-}
-
-
- Future<void> _loadMeals() async {
-  setState(() => isLoading = true);
-  try {
+  Future<void> _initializeNutritionPlan() async {
     final user = FirebaseAuth.instance.currentUser;
-
-    // Helper function to generate goal-based meals with IDs
-    List<Map<String, dynamic>> _generateGoalMeals(List<Map<String, dynamic>> nutritionList) {
-      return nutritionList.expand((category) =>
-        (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
-          ...meal,
-          'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
-        })
-      ).toList();
-    }
-
     if (user != null) {
       final userGoal = await _goalService.getUserGoal(user.uid);
-
-      // Get goal-specific meals using helper
-      List<Map<String, dynamic>> goalMeals;
-      if (userGoal == 'Gain Muscles') {
-        goalMeals = _generateGoalMeals(_gainMuscleNutrition);
-      } else if (userGoal == 'Lose Weight') {
-        goalMeals = _generateGoalMeals(_loseWeightNutrition);
-      } else {
-        goalMeals = _generateGoalMeals(_maintainNutrition);
-      }
-
       setState(() {
-        _meals = [...goalMeals, ..._defaultMeals];
+        if (userGoal == 'Gain Muscles') {
+          _meals = _gainMuscleNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
+        } else if (userGoal == 'Lose Weight') {
+          _meals = _loseWeightNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
+        } else {
+          _meals = _maintainNutrition.expand((category) => category['meals'] as List<Map<String, dynamic>>).toList();
+        }
+        isLoading = false;
       });
-    } else {
+    }
+  }
+
+  Future<void> _loadMeals() async {
+    setState(() => isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userGoal = await _goalService.getUserGoal(user.uid);
+        
+        // Get goal-specific meals
+        List<Map<String, dynamic>> goalMeals;
+        if (userGoal == 'Gain Muscles') {
+          goalMeals = _gainMuscleNutrition.expand((category) => 
+            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
+              ...meal,
+              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
+            })
+          ).toList();
+        } else if (userGoal == 'Lose Weight') {
+          goalMeals = _loseWeightNutrition.expand((category) => 
+            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
+              ...meal,
+              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
+            })
+          ).toList();
+        } else {
+          goalMeals = _maintainNutrition.expand((category) => 
+            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
+              ...meal,
+              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
+            })
+          ).toList();
+        }
+        
+        // Combine with default meals and update state
+        setState(() {
+          _meals = [...goalMeals, ..._defaultMeals];
+        });
+      } else {
+        setState(() {
+          _meals = _defaultMeals;
+        });
+      }
+    } catch (e) {
+      print('Error loading meals: $e');
       setState(() {
         _meals = _defaultMeals;
       });
+    } finally {
+      setState(() => isLoading = false);
     }
-  } catch (e) {
-    print('Error loading meals: $e');
-    setState(() {
-      _meals = _defaultMeals;
-    });
-  } finally {
-    setState(() => isLoading = false);
   }
-}
-
 
   final List<Map<String, dynamic>> _dietCategories = [
     {'name': 'All', 'icon': Icons.all_inclusive, 'description': 'All Meal Types'},
