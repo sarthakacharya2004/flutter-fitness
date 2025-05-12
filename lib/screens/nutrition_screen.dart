@@ -55,56 +55,52 @@ Future<void> _initializeNutritionPlan() async {
 }
 
 
-  Future<void> _loadMeals() async {
-    setState(() => isLoading = true);
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final userGoal = await _goalService.getUserGoal(user.uid);
-        
-        // Get goal-specific meals
-        List<Map<String, dynamic>> goalMeals;
-        if (userGoal == 'Gain Muscles') {
-          goalMeals = _gainMuscleNutrition.expand((category) => 
-            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
-              ...meal,
-              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
-            })
-          ).toList();
-        } else if (userGoal == 'Lose Weight') {
-          goalMeals = _loseWeightNutrition.expand((category) => 
-            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
-              ...meal,
-              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
-            })
-          ).toList();
-        } else {
-          goalMeals = _maintainNutrition.expand((category) => 
-            (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
-              ...meal,
-              'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
-            })
-          ).toList();
-        }
-        
-        // Combine with default meals and update state
-        setState(() {
-          _meals = [...goalMeals, ..._defaultMeals];
-        });
+ Future<void> _loadMeals() async {
+  setState(() => isLoading = true);
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Helper function to generate goal-based meals with IDs
+    List<Map<String, dynamic>> _generateGoalMeals(List<Map<String, dynamic>> nutritionList) {
+      return nutritionList.expand((category) =>
+        (category['meals'] as List<Map<String, dynamic>>).map((meal) => {
+          ...meal,
+          'id': 'goal_${meal['title'].toString().toLowerCase().replaceAll(' ', '_')}',
+        })
+      ).toList();
+    }
+
+    if (user != null) {
+      final userGoal = await _goalService.getUserGoal(user.uid);
+
+      // Get goal-specific meals using helper
+      List<Map<String, dynamic>> goalMeals;
+      if (userGoal == 'Gain Muscles') {
+        goalMeals = _generateGoalMeals(_gainMuscleNutrition);
+      } else if (userGoal == 'Lose Weight') {
+        goalMeals = _generateGoalMeals(_loseWeightNutrition);
       } else {
-        setState(() {
-          _meals = _defaultMeals;
-        });
+        goalMeals = _generateGoalMeals(_maintainNutrition);
       }
-    } catch (e) {
-      print('Error loading meals: $e');
+
+      setState(() {
+        _meals = [...goalMeals, ..._defaultMeals];
+      });
+    } else {
       setState(() {
         _meals = _defaultMeals;
       });
-    } finally {
-      setState(() => isLoading = false);
     }
+  } catch (e) {
+    print('Error loading meals: $e');
+    setState(() {
+      _meals = _defaultMeals;
+    });
+  } finally {
+    setState(() => isLoading = false);
   }
+}
+
 
   final List<Map<String, dynamic>> _dietCategories = [
     {'name': 'All', 'icon': Icons.all_inclusive, 'description': 'All Meal Types'},
