@@ -8,7 +8,19 @@ import 'profile_screen.dart';
 import 'workout_detail_screen.dart';
 
 
+class WorkoutScreen extends StatefulWidget {
+  const WorkoutScreen({super.key});
 
+  // Static method to update streak - now using the streak service
+  static Future<void> updateStreak() async {
+    // Create instance of streak service and update streak
+    final streakService = StreakService();
+    await streakService.updateStreak(incrementBy: 10);
+  }
+
+  @override
+  _WorkoutScreenState createState() => _WorkoutScreenState();
+}
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
   final GoalService _goalService = GoalService();
