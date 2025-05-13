@@ -87,51 +87,45 @@ class StreakService {
       bool isWorkoutToday = false;
       bool isConsecutiveDay = false;
 
-      if (lastWorkoutDate != null) {
-        int daysDifference = now.difference(lastWorkoutDate).inDays;
-        String lastWorkoutDateString = "${lastWorkoutDate.year}-${lastWorkoutDate.month}-${lastWorkoutDate.day}";
-        isWorkoutToday = (lastWorkoutDateString == today);
-        isConsecutiveDay = (daysDifference == 1);
-      }
+if (lastWorkoutDate != null) {
+  final lastDate = DateTime(lastWorkoutDate.year, lastWorkoutDate.month, lastWorkoutDate.day);
+  final currentDate = DateTime(now.year, now.month, now.day);
 
-      // Initialize or get total streak from the appropriate source
-      int totalStreak;
-      if (isUserLoggedIn) {
-        final docSnapshot = await _streakRef!.get();
-        if (docSnapshot.exists) {
-          final data = docSnapshot.data() as Map<String, dynamic>;
-          totalStreak = (data['total_streak'] ?? 0) + incrementBy;
-        } else {
-          totalStreak = incrementBy;
-        }
-      } else {
-        totalStreak = (prefs.getInt('total_streak') ?? 0) + incrementBy;
-      }
+  final daysDifference = currentDate.difference(lastDate).inDays;
 
-      // Handle current streak updates
-      if (isWorkoutToday) {
-        // Get daily workout count for today
-        int dailyWorkouts = prefs.getInt('daily_workouts') ?? 0;
-        dailyWorkouts += 1;
-        
-        // Only increment current streak for the first two workouts per day
-        if (dailyWorkouts <= 2) {
-          currentStreak += _streakIncrementValue;
-          
-          // Cap current streak at maximum value
-          currentStreak = currentStreak.clamp(0, _streakGoal);
-        }
-        
-        await prefs.setInt('daily_workouts', dailyWorkouts);
-      } else {
-        // It's a new day
-        if (isConsecutiveDay) {
-          // Continue streak from previous day
-          currentStreak += _streakIncrementValue;
-        } else {
-          // Start a new streak
-          currentStreak = _streakIncrementValue;
-        }
+  isWorkoutToday = (daysDifference == 0);
+  isConsecutiveDay = (daysDifference == 1);
+}
+
+int totalStreak = 0;
+if (isUserLoggedIn) {
+  final docSnapshot = await _streakRef!.get();
+  if (docSnapshot.exists) {
+    final data = docSnapshot.data() as Map<String, dynamic>;
+    totalStreak = (data['total_streak'] ?? 0);
+  }
+} else {
+  totalStreak = prefs.getInt('total_streak') ?? 0;
+}
+
+// Daily workout update
+int dailyWorkouts = prefs.getInt('daily_workouts') ?? 0;
+
+if (isWorkoutToday) {
+  dailyWorkouts += 1;
+
+  if (dailyWorkouts <= 2) {
+    currentStreak += _streakIncrementValue;
+    currentStreak = currentStreak.clamp(0, _streakGoal);
+    totalStreak += _streakIncrementValue;
+  }
+} else {
+  // New day
+  dailyWorkouts = 1;
+
+  if (isConsecutiveDay) {
+    currentStreak += _streakIncrementValue;
+
         
         // Cap current streak at maximum value
         currentStreak = currentStreak.clamp(0, _streakGoal);
