@@ -334,9 +334,9 @@ Widget _buildWeightInfoCard(String title, String value, Color color) {
     children: [
       Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 14,
-          color: Colors.grey[600],
+          color: Colors.grey,
         ),
       ),
       const SizedBox(height: 4),
@@ -351,6 +351,7 @@ Widget _buildWeightInfoCard(String title, String value, Color color) {
     ],
   );
 }
+
 
 
 void _showWeightUpdateDialog(BuildContext context) {
