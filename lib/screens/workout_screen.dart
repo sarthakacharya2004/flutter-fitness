@@ -35,7 +35,22 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _initializeWorkoutCategories();
   }
 
- 
+  Future<void> _initializeWorkoutCategories() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userGoal = await _goalService.getUserGoal(user.uid);
+      setState(() {
+        if (userGoal == 'Gain Muscles') {
+          _workoutCategories = _gainMuscleCategories;
+        } else if (userGoal == 'Lose Weight') {
+          _workoutCategories = _loseWeightCategories;
+        } else {
+          _workoutCategories = _defaultWorkoutCategories;
+        }
+        isLoading = false;
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> _gainMuscleCategories = [
     {
