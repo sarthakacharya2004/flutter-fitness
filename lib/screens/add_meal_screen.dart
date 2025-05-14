@@ -46,33 +46,40 @@ class _AddMealScreenState extends State<AddMealScreen> {
     super.dispose();
   }
 
-  Future<void> _submitMeal() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        final user = _auth.currentUser;
-        if (user == null) return;
+Future<void> _submitMeal() async {
+  if (_formKey.currentState!.validate()) {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
 
-        await _firestore.collection('users').doc(user.uid).collection('meals').add({
-          'title': _titleController.text,
-          'calories': _caloriesController.text,
-          'time': _timeController.text,
-          'protein': _proteinController.text,
-          'carbs': _carbsController.text,
-          'fats': _fatsController.text,
-          'recipe': _recipeController.text,
-          'category': _selectedCategory,
-          'imageUrl': _imageUrl,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+      // Debug log added
+      debugPrint('Submitting meal for user: ${user.uid}');
 
-        Navigator.pop(context, true);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving meal: $e')),
-        );
-      }
+      await _firestore.collection('users').doc(user.uid).collection('meals').add({
+        'title': _titleController.text,
+        'calories': _caloriesController.text,
+        'time': _timeController.text,
+        'protein': _proteinController.text,
+        'carbs': _carbsController.text,
+        'fats': _fatsController.text,
+        'recipe': _recipeController.text,
+        'category': _selectedCategory,
+        'imageUrl': _imageUrl,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      debugPrint('Meal submitted successfully');
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      debugPrint('Error while submitting meal: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving meal: $e')),
+      );
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
