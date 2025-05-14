@@ -206,33 +206,39 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
 
   Future<void> _deleteMeal() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Meal'),
-        content: const Text('Are you sure you want to delete this meal?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+  // Confirm deletion with a different approach
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Confirm Deletion'),
+      content: const Text('This will permanently delete the meal. Are you sure?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ),
+  );
 
-    if (confirmed == true) {
-      try {
-        await _firestoreService.deleteMeal(widget.mealId);
-        Navigator.pop(context, true); // Return true to indicate deletion
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete meal: $e')),
-        );
-      }
+  // If confirmed, delete the meal
+  if (confirmed == true) {
+    try {
+      // Call Firestore service to delete the meal by mealId
+      await _firestoreService.deleteMeal(widget.mealId);
+      Navigator.pop(context, true); // Return true to indicate deletion
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Meal deleted successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete meal: $e')),
+      );
     }
   }
+}
 }
