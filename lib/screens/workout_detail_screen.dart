@@ -832,42 +832,4 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     );
   }
   
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.blue[50],
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color: Colors.blue[700],
-            size: 24,
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-}
+ 
