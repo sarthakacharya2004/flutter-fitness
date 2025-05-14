@@ -443,33 +443,28 @@ class _HomeScreenState extends State<HomeScreen> {
   List<double> waterHistory = List.filled(7, 0.0);
 
   Future<void> _loadWaterData() async {
-    try {
-      final todayIntake = await waterService.getTodayWaterIntake();
-      final history = await waterService.getLast7DaysIntake(waterGoal);
-
-      setState(() {
-        waterIntake = todayIntake;
-        waterHistory = history;
-      });
-    } catch (e) {
-      // Handle potential errors (e.g., Firestore failure)
-      debugPrint('Failed to load water data: $e');
-    }
+    double todayIntake = await waterService.getTodayWaterIntake();
+    List<double> history = await waterService.getLast7DaysIntake(waterGoal);
+    setState(() {
+      waterIntake = todayIntake;
+      waterHistory = history;
+    });
   }
 
   Future<void> _updateWaterIntake(double amount) async {
     if (!mounted) return;
+
     try {
-      double newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
+      final newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
       await waterService.saveWaterIntake(newIntake);
+
       if (!mounted) return;
 
-      // Update only water-related state
       setState(() {
         waterIntake = newIntake;
       });
 
-      // Fetch history in background without showing errors
+      // Fetch history in the background
       try {
         final history = await waterService.getLast7DaysIntake(waterGoal);
         if (mounted) {
@@ -477,12 +472,11 @@ class _HomeScreenState extends State<HomeScreen> {
             waterHistory = history;
           });
         }
-      } catch (historyError) {
-        // Silently handle history fetch errors
+      } catch (_) {
+        // Silently ignore history errors
       }
     } catch (e) {
       if (mounted) {
-        // Only show error if the main water intake update fails
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error updating water intake: $e")),
         );
