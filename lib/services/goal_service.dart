@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class GoalService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Nutrition plans based on goals
+  // Nutrition plans based on goalss 
   final Map<String, List<Map<String, dynamic>>> _goalNutrition = {
     'Lose Weight': [
       {
