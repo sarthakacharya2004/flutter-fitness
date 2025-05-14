@@ -9,13 +9,13 @@ import 'notification_screen.dart';
 import 'package:fitness_hub/services/firestore_service.dart';
 import 'package:fitness_hub/services/waterintake_service.dart';
 
-
 class HomeScreen extends StatefulWidget {
   final double? initialWeight;
   final String? userGoal;
   final double? weightGoal;
 
-  const HomeScreen({super.key, this.initialWeight, this.userGoal, this.weightGoal});
+  const HomeScreen(
+      {super.key, this.initialWeight, this.userGoal, this.weightGoal});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -54,13 +54,16 @@ class _HomeScreenState extends State<HomeScreen> {
     // Save initial weight from signup if provided
     if (widget.initialWeight != null) {
       _firestoreService.addWeightLog({'weight': widget.initialWeight});
-     }
+    }
   }
 
   Future<void> _loadUserName() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       if (doc.exists && doc.data() != null) {
         setState(() {
           userName = doc['name'] ?? '';
@@ -108,7 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const ProfileScreen()),
                   );
                 },
                 child: const CircleAvatar(
@@ -141,7 +145,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const NotificationScreen()),
                   );
                 },
                 child: Container(
@@ -204,551 +209,554 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-Widget _buildWeightTracker(String userId) {
-  return Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Weight Tracker',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+  Widget _buildWeightTracker(String userId) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Weight Tracker',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser?.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const SizedBox();
+                        final weightGoal =
+                            snapshot.data?.get('weightGoal')?.toString() ??
+                                'Not set';
+                        return Text(
+                          'Goal: $weightGoal kg',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Stream to get current weight and start weight
+            FutureBuilder<Map<String, double?>>(
+              future: _firestoreService
+                  .getStartAndCurrentWeight(), // Fetch start and current weight together
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData) {
+                  return const Text(
+                    'No weight logs available',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  );
+                }
+
+                final startWeight = snapshot.data?['start'];
+                final currentWeight = snapshot.data?['current'];
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildWeightInfoCard(
+                        'Current',
+                        currentWeight != null
+                            ? '$currentWeight kg'
+                            : 'Not available',
+                        Colors.blue),
+                    _buildWeightInfoCard(
+                        'Start',
+                        startWeight != null ? '$startWeight kg' : 'Not set',
+                        Colors.grey),
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser?.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const SizedBox();
+                        final weightGoal =
+                            snapshot.data?.get('weightGoal')?.toString() ??
+                                'Not set';
+                        return _buildWeightInfoCard(
+                            'Goal', '$weightGoal kg', Colors.green);
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 15),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  _showWeightUpdateDialog(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[700],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(FirebaseAuth.instance.currentUser?.uid)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const SizedBox();
-                      final weightGoal = snapshot.data?.get('weightGoal')?.toString() ?? 'Not set';
-                      return Text(
-                        'Goal: $weightGoal kg',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                ),
+                child: const Text('Update Weight'),
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-      // Stream to get current weight and start weight
-FutureBuilder<Map<String, double?>>(
-  future: _firestoreService.getStartAndCurrentWeight(),  // Fetch start and current weight together
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (snapshot.hasError) {
-      return Center(child: Text('Error: ${snapshot.error}'));
-    }
-
-    if (!snapshot.hasData || snapshot.data == null) {
-      return const Text(
-        'No weight logs available',
-        style: TextStyle(fontSize: 16, color: Colors.grey),
-      );
-    }
-
-    final startWeight = snapshot.data!['start'];
-    final currentWeight = snapshot.data!['current'];
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildWeightInfoCard(String title, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildWeightInfoCard(
-          'Current',
-          currentWeight != null ? '${currentWeight.toString()} kg' : 'Not available',
-          Colors.blue,
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade600,
+          ),
         ),
-        _buildWeightInfoCard(
-          'Start',
-          startWeight != null ? '${startWeight.toString()} kg' : 'Not set',
-          Colors.grey,
-        ),
-        StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(FirebaseAuth.instance.currentUser?.uid)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData || !snapshot.data!.exists) {
-              return _buildWeightInfoCard('Goal', 'Not set', Colors.green);
-            }
-
-            final weightGoal = snapshot.data!.get('weightGoal');
-            final goalText = weightGoal != null ? '$weightGoal kg' : 'Not set';
-
-            return _buildWeightInfoCard('Goal', goalText, Colors.green);
-          },
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
       ],
     );
-  },
-),
+  }
 
-const SizedBox(height: 15),
-SizedBox(
-  width: double.infinity,
-  child: ElevatedButton(
-    onPressed: () {
-      _showWeightUpdateDialog(context);
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.blue[700],
-      foregroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-    ),
-    child: const Text('Update Weight'),
-  ),
-),
+  void _showWeightUpdateDialog(BuildContext context) {
+    double newWeight = 80.7; // Default value
 
-
-
-
-Widget _buildWeightInfoCard(String title, String value, Color color) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        title,
-        style: TextStyle(
-          fontSize: 14,
-          color: Colors.grey[600],
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        value,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
-      ),
-    ],
-  );
-}
-
-
-void _showWeightUpdateDialog(BuildContext context) {
-  double newWeight = 80.7;  // Default value
-
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Update Weight'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Weight (kg)',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Weight'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Weight (kg)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
+              onChanged: (value) {
+                if (value.isNotEmpty) {
+                  newWeight = double.tryParse(value) ??
+                      80.7; // fallback to default if invalid
+                }
+              },
             ),
-            onChanged: (value) {
-              if (value.isNotEmpty) {
-                newWeight = double.tryParse(value) ?? 80.7; // fallback to default if invalid
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), // Close dialog
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (newWeight <= 0) {
+                // Ensure a valid weight is entered
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Please enter a valid weight")),
+                );
+                return;
+              }
+
+              try {
+                // Save weight to Firestore as a Map<String, dynamic>
+                await _firestoreService.addWeightLog({'weight': newWeight});
+
+                // After saving, close the dialog
+                Navigator.pop(context);
+
+                // Optionally refresh UI
+                setState(() {});
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Error saving weight: $e")),
+                );
               }
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[700],
+            ),
+            child: const Text('Save'),
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context), // Close dialog
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            if (newWeight <= 0) {
-              // Ensure a valid weight is entered
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Please enter a valid weight")),
-              );
-              return;
-            }
+    );
+  }
 
-            try {
-              // Save weight to Firestore as a Map<String, dynamic>
-              await _firestoreService.addWeightLog({'weight': newWeight});
+  WaterIntakeService waterService = WaterIntakeService();
 
-              // After saving, close the dialog
-              Navigator.pop(context);
+  double waterIntake = 0.0;
+  double waterGoal = 2.0; // Liters
+  List<double> waterHistory = List.filled(7, 0.0);
 
-              // Optionally refresh UI
-              setState(() {});
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Error saving weight: $e")),
-              );
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[700],
-          ),
-          child: const Text('Save'),
-        ),
-      ],
-    ),
-  );
-}
-
-
-WaterIntakeService waterService = WaterIntakeService();
-
-double waterIntake = 0.0;
-double waterGoal = 2.0; // Liters
-List<double> waterHistory = List.filled(7, 0.0);
-
-
-Future<void> _loadWaterData() async {
-  double todayIntake = await waterService.getTodayWaterIntake();
-  List<double> history = await waterService.getLast7DaysIntake(waterGoal);
-  setState(() {
-    waterIntake = todayIntake;
-    waterHistory = history;
-  });
-}
-
-Future<void> _updateWaterIntake(double amount) async {
-  if (!mounted) return;
-  try {
-    double newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
-    await waterService.saveWaterIntake(newIntake);
-    if (!mounted) return;
-    
-    // Update only water-related state
+  Future<void> _loadWaterData() async {
+    double todayIntake = await waterService.getTodayWaterIntake();
+    List<double> history = await waterService.getLast7DaysIntake(waterGoal);
     setState(() {
-      waterIntake = newIntake;
+      waterIntake = todayIntake;
+      waterHistory = history;
     });
-    
-    // Fetch history in background without showing errors
+  }
+
+  Future<void> _updateWaterIntake(double amount) async {
+    if (!mounted) return;
     try {
-      final history = await waterService.getLast7DaysIntake(waterGoal);
-      if (mounted) {
-        setState(() {
-          waterHistory = history;
-        });
+      double newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
+      await waterService.saveWaterIntake(newIntake);
+      if (!mounted) return;
+
+      // Update only water-related state
+      setState(() {
+        waterIntake = newIntake;
+      });
+
+      // Fetch history in background without showing errors
+      try {
+        final history = await waterService.getLast7DaysIntake(waterGoal);
+        if (mounted) {
+          setState(() {
+            waterHistory = history;
+          });
+        }
+      } catch (historyError) {
+        // Silently handle history fetch errors
       }
-    } catch (historyError) {
-      // Silently handle history fetch errors
-    }
-  } catch (e) {
-    if (mounted) {
-      // Only show error if the main water intake update fails
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating water intake: $e")),
-      );
+    } catch (e) {
+      if (mounted) {
+        // Only show error if the main water intake update fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error updating water intake: $e")),
+        );
+      }
     }
   }
-}
 
-Widget _buildWaterTracker() {
-  final double percentage = (waterIntake / waterGoal) * 100;
+  Widget _buildWaterTracker() {
+    final double percentage = (waterIntake / waterGoal) * 100;
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Water Intake',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '${waterIntake.toStringAsFixed(2)} / ${waterGoal.toStringAsFixed(2)} L',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Container(
-            height: 180,
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-            child: Stack(
-              alignment: Alignment.bottomCenter,
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  height: 180 * (waterIntake / waterGoal),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.blue[300]!,
-                        Colors.blue[700]!,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.vertical(
-                      bottom: const Radius.circular(16),
-                      top: Radius.circular(waterIntake >= waterGoal ? 16 : 0),
-                    ),
+                const Text(
+                  'Water Intake',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Center(
-                  child: Icon(
-                    Icons.water_drop,
-                    size: 60,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${percentage.round()}%',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        'Completed',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
-                        ),
-                      ),
-                    ],
+                Text(
+                  '${waterIntake.toStringAsFixed(2)} / ${waterGoal.toStringAsFixed(2)} L',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[700],
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          _buildCustomWaterInput(),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Expanded(
-                child: _buildWaterButton('+100 ml', Icons.add, () {
-                  _updateWaterIntake(0.1);
-                }, Colors.blue),
+            const SizedBox(height: 20),
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildWaterButton('+50 ml', Icons.add, () {
-                  _updateWaterIntake(0.05);
-                }, Colors.blue),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Expanded(
-                child: _buildWaterButton('-50 ml', Icons.remove, () {
-                  _updateWaterIntake(-0.05);
-                }, Colors.red),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildWaterButton('Reset', Icons.refresh, () {
-                  _updateWaterIntake(-waterIntake);
-                }, Colors.grey),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Weekly Progress',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 100,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(7, (index) {
-                final dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                final intake = waterHistory[index];
-                final percentage = (intake / waterGoal) * 100;
-
-                return Column(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        width: 35,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Container(
+                    height: 180 * (waterIntake / waterGoal),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.blue[300]!,
+                          Colors.blue[700]!,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.vertical(
+                        bottom: const Radius.circular(16),
+                        top: Radius.circular(waterIntake >= waterGoal ? 16 : 0),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Icon(
+                      Icons.water_drop,
+                      size: 60,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${percentage.round()}%',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                        child: Stack(
-                          alignment: Alignment.bottomCenter,
-                          children: [
-                            Container(
-                              height: percentage,
-                              width: 35,
-                              decoration: BoxDecoration(
-                                color: Colors.blue[400],
-                                borderRadius: BorderRadius.circular(8),
+                        Text(
+                          'Completed',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildCustomWaterInput(),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  child: _buildWaterButton('+100 ml', Icons.add, () {
+                    _updateWaterIntake(0.1);
+                  }, Colors.blue),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildWaterButton('+50 ml', Icons.add, () {
+                    _updateWaterIntake(0.05);
+                  }, Colors.blue),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  child: _buildWaterButton('-50 ml', Icons.remove, () {
+                    _updateWaterIntake(-0.05);
+                  }, Colors.red),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildWaterButton('Reset', Icons.refresh, () {
+                    _updateWaterIntake(-waterIntake);
+                  }, Colors.grey),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Weekly Progress',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(7, (index) {
+                  final dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                  final intake = waterHistory[index];
+                  final percentage = (intake / waterGoal) * 100;
+
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          width: 35,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              Container(
+                                height: percentage,
+                                width: 35,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[400],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      dayLabels[index],
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 5),
+                      Text(
+                        dayLabels[index],
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              }),
+                    ],
+                  );
+                }),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildCustomWaterInput() {
-  final TextEditingController _customWaterController = TextEditingController();
+  Widget _buildCustomWaterInput() {
+    final TextEditingController _customWaterController =
+        TextEditingController();
 
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _customWaterController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: 'ml',
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-              border: InputBorder.none,
-              hintStyle: TextStyle(color: Colors.grey[500]),
-            ),
-            style: const TextStyle(fontSize: 14),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            final input = double.tryParse(_customWaterController.text);
-            if (input != null && input > 0) {
-              _updateWaterIntake(input / 1000); // Convert ml to L
-              _customWaterController.clear();
-            }
-          },
-          style: TextButton.styleFrom(
-            backgroundColor: Colors.blue[700],
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.horizontal(right: Radius.circular(8)),
-            ),
-          ),
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildWaterButton(String text, IconData icon, VoidCallback onPressed, MaterialColor color) {
-  return SizedBox(
-    width: double.infinity,
-    child: ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color[50],
-        foregroundColor: color[700],
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 5),
-          Text(text),
+          Expanded(
+            child: TextField(
+              controller: _customWaterController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'ml',
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                border: InputBorder.none,
+                hintStyle: TextStyle(color: Colors.grey[500]),
+              ),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final input = double.tryParse(_customWaterController.text);
+              if (input != null && input > 0) {
+                _updateWaterIntake(input / 1000); // Convert ml to L
+                _customWaterController.clear();
+              }
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.blue[700],
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: const RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.horizontal(right: Radius.circular(8)),
+              ),
+            ),
+            child: const Icon(
+              Icons.add,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 
+  Widget _buildWaterButton(
+      String text, IconData icon, VoidCallback onPressed, MaterialColor color) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color[50],
+          foregroundColor: color[700],
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 5),
+            Text(text),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildNutritionStats() {
     return Padding(
@@ -772,7 +780,8 @@ Widget _buildWaterButton(String text, IconData icon, VoidCallback onPressed, Mat
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             children: dailyStats.keys.map((title) {
-              int value = showWeekly ? dailyStats[title]! * 7 : dailyStats[title]!;
+              int value =
+                  showWeekly ? dailyStats[title]! * 7 : dailyStats[title]!;
               return _buildNutritionCard(
                 title,
                 value.toString(),
@@ -787,7 +796,8 @@ Widget _buildWaterButton(String text, IconData icon, VoidCallback onPressed, Mat
     );
   }
 
-  Widget _buildNutritionCard(String title, String value, String unit, Color bgColor, Color textColor) {
+  Widget _buildNutritionCard(
+      String title, String value, String unit, Color bgColor, Color textColor) {
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
@@ -816,7 +826,9 @@ Widget _buildWaterButton(String text, IconData icon, VoidCallback onPressed, Mat
                 padding: const EdgeInsets.all(8),
                 child: Icon(
                   _getIconForTitle(title),
-                  color: (title == 'Calories' || title == 'Fat') ? Colors.black : Colors.white,
+                  color: (title == 'Calories' || title == 'Fat')
+                      ? Colors.black
+                      : Colors.white,
                   size: 16,
                 ),
               ),
@@ -895,7 +907,9 @@ Widget _buildWaterButton(String text, IconData icon, VoidCallback onPressed, Mat
   }
 
   Color _getTextColor(String title) {
-    return title == 'Protein' || title == 'Carbs' ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 0, 0, 0);
+    return title == 'Protein' || title == 'Carbs'
+        ? const Color.fromARGB(255, 255, 255, 255)
+        : const Color.fromARGB(255, 0, 0, 0);
   }
 
   Widget _buildBottomNavBar(BuildContext context) {
