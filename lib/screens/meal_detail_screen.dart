@@ -178,32 +178,26 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     });
   }
 
- Future<void> _saveChanges() async {
-  try {
-    // Creating a map of fields that can be updated
-    final updatedMealData = {
-      'title': _titleController.text,
-      'calories': _caloriesController.text,
-      'time': _timeController.text,
-      'protein': _proteinController.text,
-      'recipe': _recipeController.text,
-    };
-
-    // Call to FirestoreService to update the meal using the mealId
-    await _firestoreService.updateMeal(widget.mealId, updatedMealData);
-    
-    // Toggle the edit mode and show a confirmation snackbar
-    _toggleEditing();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Meal updated successfully')),
-    );
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to update meal: $e')),
-    );
+  Future<void> _saveChanges() async {
+    try {
+      await _firestoreService.updateMeal(widget.mealId, {
+        'title': _titleController.text,
+        'calories': _caloriesController.text,
+        'time': _timeController.text,
+        'protein': _proteinController.text,
+        'recipe': _recipeController.text,
+      });
+      
+      _toggleEditing();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Meal updated successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update meal: $e')),
+      );
+    }
   }
-}
-
 
   Future<void> _deleteMeal() async {
     final confirmed = await showDialog<bool>(
