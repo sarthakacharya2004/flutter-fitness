@@ -388,9 +388,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               onChanged: (value) {
-                if (value.trim().isNotEmpty) {
-                  final parsed = double.tryParse(value);
-                  if (parsed != null) newWeight = parsed;
+                if (value.isNotEmpty) {
+                  newWeight = double.tryParse(value) ??
+                      80.7; // fallback to default if invalid
                 }
               },
             ),
@@ -404,6 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ElevatedButton(
             onPressed: () async {
               if (newWeight <= 0) {
+                // Ensure a valid weight is entered
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Please enter a valid weight")),
                 );
@@ -411,9 +412,14 @@ class _HomeScreenState extends State<HomeScreen> {
               }
 
               try {
+                // Save weight to Firestore as a Map<String, dynamic>
                 await _firestoreService.addWeightLog({'weight': newWeight});
+
+                // After saving, close the dialog
                 Navigator.pop(context);
-                setState(() {}); // Refresh UI
+
+                // Optionally refresh UI
+                setState(() {});
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("Error saving weight: $e")),
@@ -437,12 +443,18 @@ class _HomeScreenState extends State<HomeScreen> {
   List<double> waterHistory = List.filled(7, 0.0);
 
   Future<void> _loadWaterData() async {
-    double todayIntake = await waterService.getTodayWaterIntake();
-    List<double> history = await waterService.getLast7DaysIntake(waterGoal);
-    setState(() {
-      waterIntake = todayIntake;
-      waterHistory = history;
-    });
+    try {
+      final todayIntake = await waterService.getTodayWaterIntake();
+      final history = await waterService.getLast7DaysIntake(waterGoal);
+
+      setState(() {
+        waterIntake = todayIntake;
+        waterHistory = history;
+      });
+    } catch (e) {
+      // Handle potential errors (e.g., Firestore failure)
+      debugPrint('Failed to load water data: $e');
+    }
   }
 
   Future<void> _updateWaterIntake(double amount) async {
