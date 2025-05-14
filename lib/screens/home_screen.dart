@@ -453,18 +453,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _updateWaterIntake(double amount) async {
     if (!mounted) return;
-
     try {
-      final newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
+      double newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
       await waterService.saveWaterIntake(newIntake);
-
       if (!mounted) return;
 
+      // Update only water-related state
       setState(() {
         waterIntake = newIntake;
       });
 
-      // Fetch history in the background
+      // Fetch history in background without showing errors
       try {
         final history = await waterService.getLast7DaysIntake(waterGoal);
         if (mounted) {
@@ -472,11 +471,12 @@ class _HomeScreenState extends State<HomeScreen> {
             waterHistory = history;
           });
         }
-      } catch (_) {
-        // Silently ignore history errors
+      } catch (historyError) {
+        // Silently handle history fetch errors
       }
     } catch (e) {
       if (mounted) {
+        // Only show error if the main water intake update fails
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error updating water intake: $e")),
         );
@@ -485,105 +485,111 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildWaterTracker() {
-    final double percentage = (waterIntake / waterGoal) * 100;
+  final double percentage = waterGoal > 0 ? (waterIntake / waterGoal) * 100 : 0;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Water Intake',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '${waterIntake.toStringAsFixed(2)} / ${waterGoal.toStringAsFixed(2)} L',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue[700],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            height: 180,
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              borderRadius: BorderRadius.circular(16),
             ),
-          ],
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
               children: [
-                const Text(
-                  'Water Intake',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  height: 180 * (waterGoal > 0 ? (waterIntake / waterGoal).clamp(0.0, 1.0) : 0),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.blue[300]!,
+                        Colors.blue[700]!,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                      bottom: const Radius.circular(16),
+                      top: Radius.circular(waterIntake >= waterGoal ? 16 : 0),
+                    ),
                   ),
                 ),
-                Text(
-                  '${waterIntake.toStringAsFixed(2)} / ${waterGoal.toStringAsFixed(2)} L',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[700],
+                Center(
+                  child: Icon(
+                    Icons.water_drop,
+                    size: 60,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
+                ),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${percentage.round()}%',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Completed',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Container(
-                    height: 180 * (waterIntake / waterGoal),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.blue[300]!,
-                          Colors.blue[700]!,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.vertical(
-                        bottom: const Radius.circular(16),
-                        top: Radius.circular(waterIntake >= waterGoal ? 16 : 0),
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: Icon(
-                      Icons.water_drop,
-                      size: 60,
-                      color: Colors.white.withOpacity(0.7),
-                    ),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${percentage.round()}%',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          'Completed',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
             const SizedBox(height: 16),
             _buildCustomWaterInput(),
             const SizedBox(height: 8),
