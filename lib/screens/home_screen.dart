@@ -353,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey.shade600,
+            color: Colors.grey[600],
           ),
         ),
         const SizedBox(height: 4),
@@ -388,9 +388,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               onChanged: (value) {
-                if (value.isNotEmpty) {
-                  newWeight = double.tryParse(value) ??
-                      80.7; // fallback to default if invalid
+                if (value.trim().isNotEmpty) {
+                  final parsed = double.tryParse(value);
+                  if (parsed != null) newWeight = parsed;
                 }
               },
             ),
@@ -404,7 +404,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ElevatedButton(
             onPressed: () async {
               if (newWeight <= 0) {
-                // Ensure a valid weight is entered
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Please enter a valid weight")),
                 );
@@ -412,14 +411,9 @@ class _HomeScreenState extends State<HomeScreen> {
               }
 
               try {
-                // Save weight to Firestore as a Map<String, dynamic>
                 await _firestoreService.addWeightLog({'weight': newWeight});
-
-                // After saving, close the dialog
                 Navigator.pop(context);
-
-                // Optionally refresh UI
-                setState(() {});
+                setState(() {}); // Refresh UI
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("Error saving weight: $e")),
