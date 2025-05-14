@@ -205,8 +205,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 Widget _buildWeightTracker(String userId) {
-  final userDocStream = FirebaseFirestore.instance.collection('users').doc(userId).snapshots();
-
   return Padding(
     padding: const EdgeInsets.all(16.0),
     child: Container(
@@ -225,14 +223,10 @@ Widget _buildWeightTracker(String userId) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          StreamBuilder<DocumentSnapshot>(
-            stream: userDocStream,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox();
-
-              final weightGoal = snapshot.data?.get('weightGoal')?.toString() ?? 'Not set';
-
-              return Column(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
@@ -242,93 +236,103 @@ Widget _buildWeightTracker(String userId) {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Goal: $weightGoal kg',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(FirebaseAuth.instance.currentUser?.uid)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const SizedBox();
+                      final weightGoal = snapshot.data?.get('weightGoal')?.toString() ?? 'Not set';
+                      return Text(
+                        'Goal: $weightGoal kg',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      );
+                    },
                   ),
                 ],
-              );
-            },
+              ),
+            ],
           ),
           const SizedBox(height: 20),
 
-          // Fetch start and current weight together
-          FutureBuilder<Map<String, double?>>(
-            future: _firestoreService.getStartAndCurrentWeight(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+      // Stream to get current weight and start weight
+FutureBuilder<Map<String, double?>>(
+  future: _firestoreService.getStartAndCurrentWeight(),  // Fetch start and current weight together
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
+    if (snapshot.hasError) {
+      return Center(child: Text('Error: ${snapshot.error}'));
+    }
 
-              if (!snapshot.hasData) {
-                return const Text(
-                  'No weight logs available',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                );
-              }
+    if (!snapshot.hasData || snapshot.data == null) {
+      return const Text(
+        'No weight logs available',
+        style: TextStyle(fontSize: 16, color: Colors.grey),
+      );
+    }
 
-              final startWeight = snapshot.data?['start'];
-              final currentWeight = snapshot.data?['current'];
+    final startWeight = snapshot.data!['start'];
+    final currentWeight = snapshot.data!['current'];
 
-              return StreamBuilder<DocumentSnapshot>(
-                stream: userDocStream,
-                builder: (context, snapshot) {
-                  final weightGoal = snapshot.data?.get('weightGoal')?.toString() ?? 'Not set';
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildWeightInfoCard(
+          'Current',
+          currentWeight != null ? '${currentWeight.toString()} kg' : 'Not available',
+          Colors.blue,
+        ),
+        _buildWeightInfoCard(
+          'Start',
+          startWeight != null ? '${startWeight.toString()} kg' : 'Not set',
+          Colors.grey,
+        ),
+        StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser?.uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return _buildWeightInfoCard('Goal', 'Not set', Colors.green);
+            }
 
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildWeightInfoCard(
-                        'Current',
-                        currentWeight != null ? '$currentWeight kg' : 'Not available',
-                        Colors.blue,
-                      ),
-                      _buildWeightInfoCard(
-                        'Start',
-                        startWeight != null ? '$startWeight kg' : 'Not set',
-                        Colors.grey,
-                      ),
-                      _buildWeightInfoCard(
-                        'Goal',
-                        '$weightGoal kg',
-                        Colors.green,
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
+            final weightGoal = snapshot.data!.get('weightGoal');
+            final goalText = weightGoal != null ? '$weightGoal kg' : 'Not set';
 
-          const SizedBox(height: 15),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => _showWeightUpdateDialog(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[700],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Update Weight'),
-            ),
-          ),
-        ],
+            return _buildWeightInfoCard('Goal', goalText, Colors.green);
+          },
+        ),
+      ],
+    );
+  },
+),
+
+const SizedBox(height: 15),
+SizedBox(
+  width: double.infinity,
+  child: ElevatedButton(
+    onPressed: () {
+      _showWeightUpdateDialog(context);
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.blue[700],
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
     ),
-  );
-}
+    child: const Text('Update Weight'),
+  ),
+),
 
 
 
