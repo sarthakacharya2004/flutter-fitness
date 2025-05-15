@@ -205,12 +205,7 @@ class StreakService {
           'updated_at': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('workout_streak', 0);
-      await prefs.setInt('daily_streak', 0);
-      await prefs.remove('last_workout_date');
-      await prefs.setBool('reached_milestone', false);
-      await prefs.setInt('daily_workouts', 0);
+      
     } catch (e) {
       debugPrint('Error resetting streak: $e');
     }
