@@ -16,17 +16,16 @@ class WaterIntakeService {
 
     // Get previous intake for comparison
     final previousIntake = await getTodayWaterIntake();
-    
-    await _firestore
-    .collection('users')
-    .doc(_userId)
-    .collection('waterIntake')
-    .doc(dateKey)
-    .set({
-  'intake': intakeInLiters,
-  'timestamp': FieldValue.serverTimestamp(),
-});
 
+    await _firestore
+        .collection('users')
+        .doc(_userId)
+        .collection('waterIntake')
+        .doc(dateKey)
+        .set({
+      'intake': intakeInLiters,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
 
     // Create notification for water intake update
     final difference = intakeInLiters - previousIntake;
@@ -38,7 +37,7 @@ class WaterIntakeService {
     }
   }
 
-  /// Get today’s water intake
+  /// Get today's water intake
   Future<double> getTodayWaterIntake() async {
     final today = DateTime.now();
     final dateKey = '${today.year}-${today.month}-${today.day}';
