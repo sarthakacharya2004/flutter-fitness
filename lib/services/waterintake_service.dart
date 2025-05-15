@@ -12,7 +12,8 @@ class WaterIntakeService {
   /// Save water intake for today (overwrites existing entry)
   Future<void> saveWaterIntake(double intakeInLiters) async {
     final today = DateTime.now();
-    final dateKey = '${today.year}-${today.month}-${today.day}';
+    final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
 
     // Get previous intake for comparison
     final previousIntake = await getTodayWaterIntake();
