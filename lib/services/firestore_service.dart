@@ -170,36 +170,28 @@ class FirestoreService {
   }
 
   // Fetch the start weight from Firestore
-  Future<DocumentSnapshot> getStartWeight() async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      return await _firestore.collection('users').doc(user.uid).get();
-    }
-    throw Exception('No user logged in');
+Future<Map<String, double?>> getStartAndCurrentWeight() async {
+  final user = _auth.currentUser;
+  if (user == null) return {'start': null, 'current': null};
+
+  try {
+    final logs = await getAllWeightLogs();
+    final userSnapshot = await _firestore.collection('users').doc(user.uid).get();
+
+    final startWeight = userSnapshot.data()?['start_weight']?.toDouble();
+    final currentWeight = logs.isNotEmpty ? logs.last['weight']?.toDouble() : null;
+
+    return {
+      'start': startWeight,
+      'current': currentWeight,
+    };
+  } catch (e) {
+    print('Error while retrieving start and current weight: $e'); // 🔁 Improved log message
+    return {
+      'start': null,
+      'current': null,
+    };
   }
-
-  Future<Map<String, double?>> getStartAndCurrentWeight() async {
-    final user = _auth.currentUser;
-    if (user == null) return {'start': null, 'current': null};
-
-    try {
-      final logs = await getAllWeightLogs();
-      final userSnapshot = await _firestore.collection('users').doc(user.uid).get();
-
-      final startWeight = userSnapshot.data()?['start_weight']?.toDouble();
-      final currentWeight = logs.isNotEmpty ? logs.last['weight']?.toDouble() : null;
-
-      return {
-        'start': startWeight,
-        'current': currentWeight,
-      };
-    } catch (e) {
-      print('Error fetching weights: $e');
-      return {
-        'start': null,
-        'current': null,
-      };
-    }
-  }
+}
 
 }
