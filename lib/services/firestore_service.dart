@@ -150,24 +150,25 @@ class FirestoreService {
 
   // Fetch all weight logs (sorted by timestamp)
   Future<List<Map<String, dynamic>>> getAllWeightLogs() async {
-    final user = _auth.currentUser;
-    if (user == null) return [];
+  final user = _auth.currentUser;
+  if (user == null) return [];
 
-    try {
-      final query = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('weight_logs')
-          .where('timestamp', isGreaterThan: Timestamp(0, 0)) // ✅ Filters missing timestamps
-          .orderBy('timestamp') // ✅ Sorts by timestamp
-          .get();
+  try {
+    final query = await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('weight_logs')
+        .where('timestamp', isGreaterThan: Timestamp(0, 0)) // ✅ Filters out documents without a timestamp
+        .orderBy('timestamp') // ✅ Sorts by timestamp
+        .get();
 
-      return query.docs.map((doc) => doc.data()).toList();
-    } catch (e) {
-      print('Error fetching weight logs: $e');
-      return [];
-    }
+    return query.docs.map((doc) => doc.data()).toList();
+  } catch (e) {
+    print('Error occurred while fetching weight logs: $e');
+    return [];
   }
+}
+
 
   // Fetch the start weight from Firestore
   Future<DocumentSnapshot> getStartWeight() async {
