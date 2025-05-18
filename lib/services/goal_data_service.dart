@@ -4,39 +4,28 @@ class GoalDataService {
   // Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Collection references for easier reuse
-  CollectionReference<Map<String, dynamic>> get _userCollection =>
-      _firestore.collection('users');
-  CollectionReference<Map<String, dynamic>> get _workoutsCollection =>
-      _firestore.collection('workouts');
-  CollectionReference<Map<String, dynamic>> get _nutritionCollection =>
-      _firestore.collection('nutrition');
-
-  // Store or update user's goal in Firestore (merge true to not overwrite other fields)
+  // Store or update the user's goal in Firestore (merging data)
   Future<void> storeGoalData(String userId, String goal) async {
-    await _userCollection.doc(userId).set({
+    await _firestore.collection('users').doc(userId).set({
       'goal': goal,
     }, SetOptions(merge: true));
   }
 
-  // Fetch user's current goal from Firestore
+  // Retrieve the user's current goal from Firestore, defaulting to 'general'
   Future<String> getUserGoal(String userId) async {
-    final DocumentSnapshot<Map<String, dynamic>> doc =
-        await _userCollection.doc(userId).get();
-    return doc.data()?['goal'] ?? 'general'; // Default to 'general' if not set
+    final doc = await _firestore.collection('users').doc(userId).get();
+    return doc.data()?['goal'] ?? 'general';
   }
 
-  // Get list of workouts filtered by the user's goal
+  // Get workouts that match the user's goal
   Future<List<Map<String, dynamic>>> getWorkoutsByGoal(String goal) async {
-    final QuerySnapshot<Map<String, dynamic>> query =
-        await _workoutsCollection.where('goal', isEqualTo: goal).get();
-    return query.docs.map((snapshot) => snapshot.data()).toList();
+    final query = await _firestore.collection('workouts').where('goal', isEqualTo: goal).get();
+    return query.docs.map((doc) => doc.data()).toList();
   }
 
-  // Get list of nutrition plans filtered by the user's goal
+  // Get nutrition plans that match the user's goal
   Future<List<Map<String, dynamic>>> getNutritionByGoal(String goal) async {
-    final QuerySnapshot<Map<String, dynamic>> query =
-        await _nutritionCollection.where('goal', isEqualTo: goal).get();
-    return query.docs.map((snapshot) => snapshot.data()).toList();
+    final query = await _firestore.collection('nutrition').where('goal', isEqualTo: goal).get();
+    return query.docs.map((doc) => doc.data()).toList();
   }
 }
