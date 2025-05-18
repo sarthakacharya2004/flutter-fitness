@@ -4,17 +4,26 @@ import 'package:flutter/foundation.dart';
 class GoalDataService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Store or update the user's goal in Firestore.
-  Future<void> storeUserGoal(String userId, String goal) async {
-    try {
-      await _firestore.collection('users').doc(userId).set({
-        'goal': goal,
-      }, SetOptions(merge: true));
-    } catch (e) {
-      debugPrint('Error storing user goal: $e');
-      rethrow;
-    }
+ /// Stores or updates the user's goal in Firestore with validation and error logging.
+Future<void> storeUserGoal(String userId, String goal) async {
+  if (userId.isEmpty || goal.isEmpty) {
+    debugPrint('Invalid userId or goal provided.');
+    return;
   }
+
+  try {
+    await _firestore.collection('users').doc(userId).set(
+      {'goal': goal},
+      SetOptions(merge: true),
+    );
+    debugPrint('User goal updated successfully for userId: $userId');
+  } catch (e, stackTrace) {
+    debugPrint('Failed to store user goal: $e');
+    debugPrintStack(stackTrace: stackTrace);
+    rethrow;
+  }
+}
+
 
   /// Retrieve the user's goal from Firestore. Returns 'general' if not found.
   Future<String> getUserGoal(String userId) async {
