@@ -263,29 +263,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                String oldName = name;
-                String oldDescription = description;
-
                 setState(() {
                   name = nameController.text;
                   description = descriptionController.text;
                 });
-
                 _saveProfile(); // Save the updated name and description to Firestore
-
-                if (name != oldName) {
-                  _notificationService.createActivityNotification(
-                    'Profile',
-                    'updated name from "$oldName" to "$name"',
-                  );
-                }
-                if (description != oldDescription) {
-                  _notificationService.createActivityNotification(
-                    'Profile',
-                    'updated description',
-                  );
-                }
-
                 Navigator.pop(context);
               },
               child: const Text('Save'),
