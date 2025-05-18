@@ -81,10 +81,18 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // UI Improvement: added shadow to image container for better visual depth
             Container(
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
                 image: DecorationImage(
                   image: NetworkImage(widget.image),
                   fit: BoxFit.cover,
@@ -174,14 +182,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   void _toggleEditing() {
     setState(() {
-      if (_isEditing) {
-        // Reset controllers to original values when cancelling editing
-        _titleController.text = widget.title;
-        _caloriesController.text = widget.calories;
-        _timeController.text = widget.time;
-        _proteinController.text = widget.protein;
-        _recipeController.text = widget.recipe;
-      }
       _isEditing = !_isEditing;
     });
   }
@@ -195,7 +195,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         'protein': _proteinController.text,
         'recipe': _recipeController.text,
       });
-
+      
       _toggleEditing();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Meal updated successfully')),
