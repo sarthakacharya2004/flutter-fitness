@@ -43,40 +43,64 @@ class _SignupStepsScreenState extends State<SignupStepsScreen> {
     }
   }
 
-  void _saveUserData() async {
-    try {
-      final User? user = _auth.currentUser;
-      if (user != null) {
-        final weight = double.parse(_weightController.text);
-        final weightGoal = double.parse(_weightGoalController.text);
+void _saveUserData() async {
+  final weightText = _weightController.text.trim();
+  final weightGoalText = _weightGoalController.text.trim();
 
-        await _firestore.collection('users').doc(user.uid).set({
-          'weight': weight,
-          'goal': selectedGoal,
-          'startWeight': weight,
-          'weightGoal': weightGoal,
-          'createdAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+  final weight = double.tryParse(weightText);
+  final weightGoal = double.tryParse(weightGoalText);
 
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomeScreen(
-                initialWeight: weight,
-                userGoal: selectedGoal!,
-                weightGoal: weightGoal,
-              ),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving data: ${e.toString()}")),
-      );
-    }
+  if (weight == null || weightGoal == null || selectedGoal == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please provide valid weight and goal values.")),
+    );
+    return;
   }
+
+  final User? user = _auth.currentUser;
+  if (user == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("User not logged in.")),
+    );
+    return;
+  }
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+
+  try {
+    await _firestore.collection('users').doc(user.uid).set({
+      'weight': weight,
+      'startWeight': weight,
+      'weightGoal': weightGoal,
+      'goal': selectedGoal,
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    if (!mounted) return;
+    Navigator.pop(context); // close loading indicator
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomeScreen(
+          initialWeight: weight,
+          userGoal: selectedGoal!,
+          weightGoal: weightGoal,
+        ),
+      ),
+    );
+  } catch (e) {
+    Navigator.pop(context); // close loading indicator
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Failed to save data: ${e.toString()}")),
+    );
+  }
+}
+
 
   void _previousStep() {
     if (step > 1) {
