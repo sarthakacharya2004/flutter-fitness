@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fitness_hub/screens/login_screen.dart';
@@ -15,18 +14,18 @@ class VerifyEmailScreen extends StatefulWidget {
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  bool _isLoading = true;
-  late Timer _timer;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _isLoading = true;
   bool _emailVerified = false;
+  late Timer _timer;
 
   @override
   void initState() {
     super.initState();
-    _startVerificationCheck();
-    // Listen for auth state changes (for when user returns to app after verifying)
-    _auth.authStateChanges().listen((User? user) {
-      if (user != null && user.emailVerified) {
+    _startEmailVerificationCheck();
+
+    _auth.authStateChanges().listen((user) {
+      if (user?.emailVerified == true) {
         _navigateToNextScreen();
       }
     });
@@ -38,49 +37,46 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     super.dispose();
   }
 
-  void _startVerificationCheck() {
-    // Check immediately
+  void _startEmailVerificationCheck() {
     _checkEmailVerification();
-    
-    // Then check every 5 seconds
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       _checkEmailVerification();
     });
   }
 
   Future<void> _checkEmailVerification() async {
-    User? user = _auth.currentUser;
-
-    if (user == null) {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
-        );
-      }
-      return;
-    }
-
     try {
-      // Force refresh the user's verification status
-      await user.reload();
-      user = _auth.currentUser;
+      await _auth.currentUser?.reload();
+      final user = _auth.currentUser;
 
-      if (user != null && user.emailVerified && !_emailVerified) {
-        if (mounted) {
-          setState(() {
-            _emailVerified = true;
-            _isLoading = false;
-          });
-          _navigateToNextScreen();
-        }
-      } else if (mounted) {
+      if (user?.emailVerified == true && !_emailVerified) {
+        setState(() {
+          _emailVerified = true;
+          _isLoading = false;
+        });
+        _navigateToNextScreen();
+      } else {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      debugPrint('Error checking email verification: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _resendVerificationEmail() async {
+    try {
+      setState(() => _isLoading = true);
+      final user = _auth.currentUser;
+
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        _showMessage("Verification email resent!");
       }
+    } catch (e) {
+      _showMessage("Failed to resend email: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -88,29 +84,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     _timer.cancel();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => SignupStepsScreen()),
+      MaterialPageRoute(builder: (_) => const SignupStepsScreen()),
     );
   }
 
-  Future<void> _resendVerificationEmail() async {
-    try {
-      setState(() => _isLoading = true);
-      User? user = _auth.currentUser;
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Verification email resent!")),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to resend email: $e")),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -129,8 +108,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   children: [
                     Icon(Icons.arrow_back, color: Colors.white),
                     SizedBox(width: 5),
-                    Text("Back",
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
+                    Text("Back", style: TextStyle(color: Colors.white, fontSize: 16)),
                   ],
                 ),
               ),
@@ -166,21 +144,17 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 30),
-                    if (_isLoading)
-                      const CircularProgressIndicator()
-                    else
-                      Column(
-                        children: [
-                          const Text(
-                            "Haven't received the email?",
-                            style: TextStyle(fontSize: 14),
+                    _isLoading
+                        ? const CircularProgressIndicator()
+                        : Column(
+                            children: [
+                              const Text("Haven't received the email?", style: TextStyle(fontSize: 14)),
+                              TextButton(
+                                onPressed: _resendVerificationEmail,
+                                child: const Text("Resend Verification Email"),
+                              ),
+                            ],
                           ),
-                          TextButton(
-                            onPressed: _resendVerificationEmail,
-                            child: const Text("Resend Verification Email"),
-                          ),
-                        ],
-                      ),
                   ],
                 ),
               ),
