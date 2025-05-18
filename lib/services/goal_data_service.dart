@@ -49,20 +49,33 @@ Future<String> getUserGoal(String userId) async {
 }
 
 
-  /// Fetch workouts matching the user's goal.
-  Future<List<Map<String, dynamic>>> getWorkoutsByGoal(String goal) async {
-    try {
-      final query = await _firestore
-          .collection('workouts')
-          .where('goal', isEqualTo: goal)
-          .get();
+/// Fetch workouts matching the user's goal.
+/// Returns an empty list if no workouts found or on error.
+Future<List<Map<String, dynamic>>> getWorkoutsByGoal(String goal) async {
+  if (goal.isEmpty) {
+    debugPrint('Empty goal provided to getWorkoutsByGoal. Returning empty list.');
+    return [];
+  }
 
-      return query.docs.map((doc) => doc.data()).toList();
-    } catch (e) {
-      debugPrint('Error fetching workouts: $e');
+  try {
+    final querySnapshot = await _firestore
+        .collection('workouts')
+        .where('goal', isEqualTo: goal)
+        .get();
+
+    if (querySnapshot.docs.isEmpty) {
+      debugPrint('No workouts found for goal: $goal');
       return [];
     }
+
+    return querySnapshot.docs.map((doc) => doc.data()).toList();
+  } catch (e, stackTrace) {
+    debugPrint('Error fetching workouts for goal "$goal": $e');
+    debugPrintStack(stackTrace: stackTrace);
+    return [];
   }
+}
+
 
   /// Fetch nutrition plans matching the user's goal.
   Future<List<Map<String, dynamic>>> getNutritionByGoal(String goal) async {
