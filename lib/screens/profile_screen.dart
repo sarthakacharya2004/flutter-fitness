@@ -36,19 +36,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       isLoading = true;
     });
-    
-    User? user = FirebaseAuth.instance.currentUser; // Get current logged-in user
+
+    User? user =
+        FirebaseAuth.instance.currentUser; // Get current logged-in user
     if (user != null) {
       try {
         // Fetch the user profile from Firestore
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
         if (userDoc.exists) {
-          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+          Map<String, dynamic> userData =
+              userDoc.data() as Map<String, dynamic>;
           setState(() {
             name = userData['name'] ?? ''; // Fetch name from Firestore
             description = userData['description'] ?? ''; // Fetch description
-            weight = userData['weight']?.toString() ?? ''; // Fetch weight from Firestore
-            height = userData['height']?.toString() ?? ''; // Fetch height from Firestore
+            weight = userData['weight']?.toString() ??
+                ''; // Fetch weight from Firestore
+            height = userData['height']?.toString() ??
+                ''; // Fetch height from Firestore
             bmi = userData['bmi']?.toString() ?? ''; // Fetch BMI from Firestore
             goal = userData['goal'] ?? ''; // Fetch goal from Firestore
           });
@@ -69,16 +76,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Show dialog to edit values (weight, height, or bmi)
   void _showEditDialog(String type) {
-    TextEditingController controller;
-    if (type == 'weight') {
-      controller = TextEditingController(text: weight);
-    } else if (type == 'height') {
-      controller = TextEditingController(text: height);
-    } else if (type == 'bmi') {
-      controller = TextEditingController(text: bmi);
-    } else {
-      return;
-    }
+    final TextEditingController controller = TextEditingController(
+      text: (type == 'weight')
+          ? weight
+          : (type == 'height')
+              ? height
+              : (type == 'bmi')
+                  ? bmi
+                  : '',
+    );
+
+    if (controller.text.isEmpty) return;
 
     showDialog(
       context: context,
@@ -97,9 +105,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (type == 'weight') {
                     String oldWeight = weight;
                     weight = controller.text;
-                    // Create notification for weight update
+
                     double? newWeightVal = double.tryParse(weight);
                     double? oldWeightVal = double.tryParse(oldWeight);
+
                     if (newWeightVal != null && oldWeightVal != null) {
                       double difference = newWeightVal - oldWeightVal;
                       _notificationService.createActivityNotification(
@@ -107,38 +116,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'updated weight from ${oldWeight}kg to ${weight}kg',
                       );
                     }
-                    // Only recalculate BMI if both weight and height are available
-                    if (weight.isNotEmpty && height.isNotEmpty) {
-                      double? weightVal = double.tryParse(weight);
-                      double? heightVal = double.tryParse(height);
-                      if (weightVal != null && heightVal != null) {
-                        double bmiVal = weightVal / ((heightVal / 100) * (heightVal / 100));
-                        bmi = bmiVal.toStringAsFixed(1);
-                      }
-                    }
                   } else if (type == 'height') {
                     height = controller.text;
-                    // Only recalculate BMI if both weight and height are available
-                    if (weight.isNotEmpty && height.isNotEmpty) {
-                      double? weightVal = double.tryParse(weight);
-                      double? heightVal = double.tryParse(height);
-                      if (weightVal != null && heightVal != null) {
-                        double bmiVal = weightVal / ((heightVal / 100) * (heightVal / 100));
-                        bmi = bmiVal.toStringAsFixed(1);
-                      }
-                    }
                   } else if (type == 'bmi') {
                     bmi = controller.text;
                   }
+
+                  // Recalculate BMI
+                  double? w = double.tryParse(weight);
+                  double? h = double.tryParse(height);
+                  if (w != null && h != null && h > 0) {
+                    double bmiVal = w / ((h / 100) * (h / 100));
+                    bmi = bmiVal.toStringAsFixed(1);
+                  }
                 });
-                _saveProfile(); // Save the updated value to Firestore
+
+                _saveProfile();
                 Navigator.pop(context);
               },
               child: Text('Save'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the dialog without saving
+                Navigator.pop(context);
               },
               child: Text('Cancel'),
             ),
@@ -150,11 +150,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Save profile to Firestore
   _saveProfile() async {
-    User? user = FirebaseAuth.instance.currentUser; // Get current logged-in user
+    User? user =
+        FirebaseAuth.instance.currentUser; // Get current logged-in user
     if (user != null) {
       // Update user profile in Firestore
       try {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
           'name': name,
           'description': description,
           'weight': weight,
@@ -163,7 +167,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'goal': goal,
         });
         // Show success message
-        
       } catch (e) {
         // Show error message
         if (mounted) {
@@ -225,7 +228,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Show dialog to edit name and description
   void _showEditProfileDialog() {
     TextEditingController nameController = TextEditingController(text: name);
-    TextEditingController descriptionController = TextEditingController(text: description);
+    TextEditingController descriptionController =
+        TextEditingController(text: description);
 
     showDialog(
       context: context,
@@ -242,7 +246,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: descriptionController,
-                decoration: const InputDecoration(hintText: 'Enter new description'),
+                decoration:
+                    const InputDecoration(hintText: 'Enter new description'),
               ),
             ],
           ),
@@ -288,7 +293,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : Column(
                 children: [
                   _buildTopBar(context),
-                  Expanded(child: _buildProfileContent()), // This prevents overflow
+                  Expanded(
+                      child: _buildProfileContent()), // This prevents overflow
                   _buildBottomNavBar(context),
                 ],
               ),
@@ -342,7 +348,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.of(context).pop(); // Close the dialog
                 await FirebaseAuth.instance.signOut();
                 // Navigate to login screen or welcome page
-                Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/welcome', (route) => false);
               },
               child: const Text('Yes'),
             ),
@@ -372,13 +379,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildGoalDescription() {
     // Maps goals to their descriptions
     Map<String, String> goalDescriptions = {
-      'Maintain': 'Focus on maintaining current weight while improving overall fitness and health.',
-      'Gain Muscles': 'Prioritize gaining weight and muscle mass through proper nutrition and training.',
-      'Lose Weight': 'Focus on reducing body weight through balanced diet and regular exercise.',
+      'Maintain':
+          'Focus on maintaining current weight while improving overall fitness and health.',
+      'Gain Muscles':
+          'Prioritize gaining weight and muscle mass through proper nutrition and training.',
+      'Lose Weight':
+          'Focus on reducing body weight through balanced diet and regular exercise.',
     };
 
     // Get description for current goal
-    String description = goalDescriptions[goal] ?? 'Customize your fitness journey based on your personal goals.';
+    String description = goalDescriptions[goal] ??
+        'Customize your fitness journey based on your personal goals.';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -436,7 +447,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 children: [
                   Text(
-                    name.isNotEmpty ? name : 'Loading...', // Display the name fetched from Firestore
+                    name.isNotEmpty
+                        ? name
+                        : 'Loading...', // Display the name fetched from Firestore
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -472,17 +485,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         children: [
-          _buildStatCard('Weight', '$weight kg', Colors.grey.shade200, Colors.black, 'weight', Icons.accessibility),
-          _buildStatCard('Height', '$height cm', Colors.black, Colors.white, 'height', Icons.height),
-          _buildStatCard('BMI', bmi, Colors.blue, Colors.white, 'bmi', Icons.monitor_weight),
-          _buildStatCard('Goal', goal, Colors.blue.shade100, Colors.black, 'goal', Icons.flag),
+          _buildStatCard('Weight', '$weight kg', Colors.grey.shade200,
+              Colors.black, 'weight', Icons.accessibility),
+          _buildStatCard('Height', '$height cm', Colors.black, Colors.white,
+              'height', Icons.height),
+          _buildStatCard('BMI', bmi, Colors.blue, Colors.white, 'bmi',
+              Icons.monitor_weight),
+          _buildStatCard('Goal', goal, Colors.blue.shade100, Colors.black,
+              'goal', Icons.flag),
         ],
       ),
     );
   }
 
   // Stat card widget with an editable option
-  Widget _buildStatCard(String title, String value, Color bgColor, Color textColor, String type, IconData icon) {
+  Widget _buildStatCard(String title, String value, Color bgColor,
+      Color textColor, String type, IconData icon) {
     return GestureDetector(
       onTap: () {
         if (type == 'goal') {
@@ -506,7 +524,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    color: textColor == Colors.white ? Colors.white70 : Colors.grey,
+                    color: textColor == Colors.white
+                        ? Colors.white70
+                        : Colors.grey,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
