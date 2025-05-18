@@ -19,17 +19,21 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   bool _emailVerified = false;
   late Timer _timer;
 
-  @override
-  void initState() {
-    super.initState();
-    _startEmailVerificationCheck();
+ @override
+void initState() {
+  super.initState();
 
-    _auth.authStateChanges().listen((user) {
-      if (user?.emailVerified == true) {
-        _navigateToNextScreen();
-      }
-    });
-  }
+  // Start periodic email verification check
+  _startEmailVerificationCheck();
+
+  // Listen for auth state changes and navigate if verified
+  _auth.authStateChanges().listen((User? user) {
+    if (mounted && user != null && user.emailVerified) {
+      _navigateToNextScreen();
+    }
+  });
+}
+
 
   @override
   void dispose() {
