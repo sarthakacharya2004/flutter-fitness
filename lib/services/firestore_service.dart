@@ -5,13 +5,16 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // Helper method to get current user or null if not signed in
+  User? _getCurrentUser() => _auth.currentUser;
+
   String _getFormattedDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Future<void> addMeal(Map<String, dynamic> mealData) async {
     try {
-      final user = _auth.currentUser;
+      final user = _getCurrentUser();
       if (user != null) {
         await _firestore
             .collection('users')
@@ -20,13 +23,13 @@ class FirestoreService {
             .add(mealData);
       }
     } catch (e) {
-      print('Error adding meal: $e');  // Added error log
+      print('Error adding meal: $e');
       throw Exception('Failed to add meal: $e');
     }
   }
 
   Stream<List<Map<String, dynamic>>> getMeals() {
-    final user = _auth.currentUser;
+    final user = _getCurrentUser();
     if (user != null) {
       return _firestore
           .collection('users')
@@ -45,7 +48,7 @@ class FirestoreService {
 
   Future<void> updateMeal(String mealId, Map<String, dynamic> updatedData) async {
     try {
-      final user = _auth.currentUser;
+      final user = _getCurrentUser();
       if (user != null) {
         await _firestore
             .collection('users')
@@ -55,14 +58,14 @@ class FirestoreService {
             .update(updatedData);
       }
     } catch (e) {
-      print('Error updating meal: $e');  // Added error log
+      print('Error updating meal: $e');
       throw Exception('Failed to update meal: $e');
     }
   }
 
   Future<void> deleteMeal(String mealId) async {
     try {
-      final user = _auth.currentUser;
+      final user = _getCurrentUser();
       if (user != null) {
         await _firestore
             .collection('users')
@@ -72,14 +75,14 @@ class FirestoreService {
             .delete();
       }
     } catch (e) {
-      print('Error deleting meal: $e');  // Added error log
+      print('Error deleting meal: $e');
       throw Exception('Failed to delete meal: $e');
     }
   }
 
   Future<void> addWeightLog(Map<String, dynamic> weightData) async {
     try {
-      final user = _auth.currentUser;
+      final user = _getCurrentUser();
       if (user != null) {
         final formattedDate = _getFormattedDate(DateTime.now());
 
@@ -102,13 +105,13 @@ class FirestoreService {
         });
       }
     } catch (e) {
-      print('Error adding weight log: $e');  // Added error log
+      print('Error adding weight log: $e');
       throw Exception('Failed to add weight log: $e');
     }
   }
 
   Stream<Map<String, dynamic>?> getWeightLogForToday() {
-    final user = _auth.currentUser;
+    final user = _getCurrentUser();
     if (user != null) {
       final formattedDate = _getFormattedDate(DateTime.now());
 
@@ -130,7 +133,7 @@ class FirestoreService {
 
   Future<void> updateWeightLog(Map<String, dynamic> updatedData) async {
     try {
-      final user = _auth.currentUser;
+      final user = _getCurrentUser();
       if (user != null) {
         final formattedDate = _getFormattedDate(DateTime.now());
 
@@ -142,13 +145,13 @@ class FirestoreService {
             .update(updatedData);
       }
     } catch (e) {
-      print('Error updating weight log: $e');  // Added error log
+      print('Error updating weight log: $e');
       throw Exception('Failed to update weight log: $e');
     }
   }
 
   Future<List<Map<String, dynamic>>> getAllWeightLogs() async {
-    final user = _auth.currentUser;
+    final user = _getCurrentUser();
     if (user == null) return [];
 
     try {
@@ -168,7 +171,7 @@ class FirestoreService {
   }
 
   Future<DocumentSnapshot> getStartWeight() async {
-    final user = _auth.currentUser;
+    final user = _getCurrentUser();
     if (user != null) {
       return await _firestore.collection('users').doc(user.uid).get();
     }
@@ -176,7 +179,7 @@ class FirestoreService {
   }
 
   Future<Map<String, double?>> getStartAndCurrentWeight() async {
-    final user = _auth.currentUser;
+    final user = _getCurrentUser();
     if (user == null) return {'start': null, 'current': null};
 
     try {
