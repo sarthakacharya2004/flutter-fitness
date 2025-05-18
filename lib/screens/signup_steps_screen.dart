@@ -7,7 +7,7 @@ class SignupStepsScreen extends StatefulWidget {
   const SignupStepsScreen({super.key});
 
   @override
-  _SignupStepsScreenState createState() => _SignupStepsScreenState();
+  State<SignupStepsScreen> createState() => _SignupStepsScreenState();
 }
 
 class _SignupStepsScreenState extends State<SignupStepsScreen> {
@@ -18,42 +18,54 @@ class _SignupStepsScreenState extends State<SignupStepsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  void _nextStep() async {
-    setState(() {
-      if (step == 1 && _weightController.text.isNotEmpty && _weightGoalController.text.isNotEmpty) {
-        step = 2;
-      } else if (step == 2 && selectedGoal != null) {
-        _saveUserData();
-      } else {
+  void _nextStep() {
+    if (step == 1) {
+      final currentWeight = double.tryParse(_weightController.text);
+      final goalWeight = double.tryParse(_weightGoalController.text);
+
+      if (currentWeight == null || goalWeight == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please complete the selection")),
+          const SnackBar(content: Text("Please enter valid weights.")),
         );
+        return;
       }
-    });
+
+      setState(() => step = 2);
+    } else if (step == 2) {
+      if (selectedGoal == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select a goal.")),
+        );
+        return;
+      }
+
+      _saveUserData();
+    }
   }
 
   void _saveUserData() async {
     try {
       final User? user = _auth.currentUser;
       if (user != null) {
-        // Save user data to Firestore
+        final weight = double.parse(_weightController.text);
+        final weightGoal = double.parse(_weightGoalController.text);
+
         await _firestore.collection('users').doc(user.uid).set({
-          'weight': double.parse(_weightController.text),
+          'weight': weight,
           'goal': selectedGoal,
-          'startWeight': double.parse(_weightController.text),
-          'weightGoal': double.parse(_weightGoalController.text),
+          'startWeight': weight,
+          'weightGoal': weightGoal,
           'createdAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
-        
-        // Navigate to HomeScreen and pass the weight
+
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => HomeScreen(
-                initialWeight: double.parse(_weightController.text),
+                initialWeight: weight,
                 userGoal: selectedGoal!,
-                weightGoal: double.parse(_weightGoalController.text),
+                weightGoal: weightGoal,
               ),
             ),
           );
@@ -61,47 +73,48 @@ class _SignupStepsScreenState extends State<SignupStepsScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving data: $e")),
+        SnackBar(content: Text("Error saving data: ${e.toString()}")),
       );
+    }
+  }
+
+  void _previousStep() {
+    if (step > 1) {
+      setState(() => step--);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Personalize Your Experience")),
+      appBar: AppBar(
+        title: const Text("Personalize Your Experience"),
+        leading: step > 1
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _previousStep,
+              )
+            : null,
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            LinearProgressIndicator(value: step / 2),
+            LinearProgressIndicator(
+              value: step / 2,
+              backgroundColor: Colors.grey[200],
+              color: Colors.blueAccent,
+            ),
             const SizedBox(height: 20),
             if (step == 1) ...[
-              const Text("Enter Your Body Weight", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _weightController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: "Current Weight in kg",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
+              _buildLabel("Enter Your Body Weight"),
+              _buildNumberField("Current Weight in kg", _weightController),
               const SizedBox(height: 20),
-              const Text("Enter Your Goal Weight", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _weightGoalController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: "Goal Weight in kg",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
+              _buildLabel("Enter Your Goal Weight"),
+              _buildNumberField("Goal Weight in kg", _weightGoalController),
             ] else if (step == 2) ...[
-              const Text("Select Your Goal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
+              _buildLabel("Select Your Goal"),
               _buildSelectionBox("Lose Weight"),
               _buildSelectionBox("Maintain"),
               _buildSelectionBox("Gain Muscles"),
@@ -118,7 +131,8 @@ class _SignupStepsScreenState extends State<SignupStepsScreen> {
                   ),
                 ),
                 onPressed: _nextStep,
-                child: Text(step == 2 ? "Finish" : "Next", style: const TextStyle(fontSize: 16, color: Colors.white)),
+                child: Text(step == 2 ? "Finish" : "Next",
+                    style: const TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),
           ],
@@ -127,22 +141,49 @@ class _SignupStepsScreenState extends State<SignupStepsScreen> {
     );
   }
 
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _buildNumberField(String label, TextEditingController controller) {
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: label,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSelectionBox(String goal) {
+    final isSelected = selectedGoal == goal;
     return GestureDetector(
       onTap: () => setState(() => selectedGoal = goal),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        padding: const EdgeInsets.all(15),
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         decoration: BoxDecoration(
-          color: selectedGoal == goal ? Colors.blue.shade100 : Colors.white,
-          border: Border.all(color: Colors.grey.shade300),
+          color: isSelected ? Colors.blue.shade50 : Colors.white,
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(goal, style: const TextStyle(fontSize: 16)),
-            if (selectedGoal == goal) const Icon(Icons.check, color: Colors.blue),
+            if (isSelected) const Icon(Icons.check_circle, color: Colors.blue),
           ],
         ),
       ),
