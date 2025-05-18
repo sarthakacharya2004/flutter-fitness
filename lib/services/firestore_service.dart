@@ -21,7 +21,7 @@ class FirestoreService {
     }
   }
 
-  // Get all meals
+// Streams all meals for the current user in real time from Firestore
   Stream<List<Map<String, dynamic>>> getMeals() {
     final user = _auth.currentUser;
     if (user != null) {
