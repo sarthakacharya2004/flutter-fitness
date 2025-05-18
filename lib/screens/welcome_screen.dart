@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
+import 'signup_steps_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'home_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -103,11 +105,7 @@ class WelcomeScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SocialButton(asset: "assets/facebook.png"),
-                  const SizedBox(width: 20),
                   SocialButton(asset: "assets/google.png", isGoogle: true),
-                  const SizedBox(width: 20),
-                  SocialButton(asset: "assets/apple.png"),
                 ],
               ),
 
@@ -128,17 +126,42 @@ class SocialButton extends StatelessWidget {
 
   Future<void> _handleSocialLogin(BuildContext context) async {
     try {
-      if (isGoogle) { // Check if it's the Google button
-        await _signInWithGoogle();
-        // Navigate to HomeScreen after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-        );
+      if (isGoogle) {
+        final UserCredential userCredential = await _signInWithGoogle();
+
+        // Check if the user already exists in Firestore
+        User? user = userCredential.user;
+        if (user != null) {
+          // Look for user in Firestore
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+          // If the user document doesn't exist, save data to Firestore and go to SignUpScreen
+          if (!userDoc.exists) {
+            // Get user's Google account details
+            final String name = user.displayName ?? "No Name";  // Default to "No Name" if display name is null
+            final String email = user.email ?? "No Email";
+
+            // Create a new user document in Firestore
+            await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+              'name': name,
+              'email': email,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+
+            // Navigate to the SignUpScreen for additional information (if needed)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => SignupStepsScreen()),
+            );
+          } else {
+            // If the user exists, navigate to the home screen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          }
+        }
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login Successful!")),
-      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Login Failed: $e")),
