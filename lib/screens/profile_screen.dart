@@ -76,17 +76,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Show dialog to edit values (weight, height, or bmi)
   void _showEditDialog(String type) {
-    final TextEditingController controller = TextEditingController(
-      text: (type == 'weight')
-          ? weight
-          : (type == 'height')
-              ? height
-              : (type == 'bmi')
-                  ? bmi
-                  : '',
-    );
-
-    if (controller.text.isEmpty) return;
+    TextEditingController controller;
+    if (type == 'weight') {
+      controller = TextEditingController(text: weight);
+    } else if (type == 'height') {
+      controller = TextEditingController(text: height);
+    } else if (type == 'bmi') {
+      controller = TextEditingController(text: bmi);
+    } else {
+      return;
+    }
 
     showDialog(
       context: context,
@@ -105,10 +104,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (type == 'weight') {
                     String oldWeight = weight;
                     weight = controller.text;
-
+                    // Create notification for weight update
                     double? newWeightVal = double.tryParse(weight);
                     double? oldWeightVal = double.tryParse(oldWeight);
-
                     if (newWeightVal != null && oldWeightVal != null) {
                       double difference = newWeightVal - oldWeightVal;
                       _notificationService.createActivityNotification(
@@ -116,29 +114,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'updated weight from ${oldWeight}kg to ${weight}kg',
                       );
                     }
+                    // Only recalculate BMI if both weight and height are available
+                    if (weight.isNotEmpty && height.isNotEmpty) {
+                      double? weightVal = double.tryParse(weight);
+                      double? heightVal = double.tryParse(height);
+                      if (weightVal != null && heightVal != null) {
+                        double bmiVal =
+                            weightVal / ((heightVal / 100) * (heightVal / 100));
+                        bmi = bmiVal.toStringAsFixed(1);
+                      }
+                    }
                   } else if (type == 'height') {
                     height = controller.text;
+                    // Only recalculate BMI if both weight and height are available
+                    if (weight.isNotEmpty && height.isNotEmpty) {
+                      double? weightVal = double.tryParse(weight);
+                      double? heightVal = double.tryParse(height);
+                      if (weightVal != null && heightVal != null) {
+                        double bmiVal =
+                            weightVal / ((heightVal / 100) * (heightVal / 100));
+                        bmi = bmiVal.toStringAsFixed(1);
+                      }
+                    }
                   } else if (type == 'bmi') {
                     bmi = controller.text;
                   }
-
-                  // Recalculate BMI
-                  double? w = double.tryParse(weight);
-                  double? h = double.tryParse(height);
-                  if (w != null && h != null && h > 0) {
-                    double bmiVal = w / ((h / 100) * (h / 100));
-                    bmi = bmiVal.toStringAsFixed(1);
-                  }
                 });
-
-                _saveProfile();
+                _saveProfile(); // Save the updated value to Firestore
                 Navigator.pop(context);
               },
               child: Text('Save'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Close the dialog without saving
               },
               child: Text('Cancel'),
             ),
@@ -149,31 +158,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Save profile to Firestore
-  _saveProfile() async {
-    User? user =
-        FirebaseAuth.instance.currentUser; // Get current logged-in user
-    if (user != null) {
-      // Update user profile in Firestore
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
-          'name': name,
-          'description': description,
-          'weight': weight,
-          'height': height,
-          'bmi': bmi,
-          'goal': goal,
-        });
-        // Show success message
-      } catch (e) {
-        // Show error message
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating profile: $e')),
-          );
-        }
+  Future<void> _saveProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'name': name,
+        'description': description,
+        'weight': weight,
+        'height': height,
+        'bmi': bmi,
+        'goal': goal,
+      });
+      // Optional: Show success message (can add later if needed)
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating profile: $e')),
+        );
       }
     }
   }
