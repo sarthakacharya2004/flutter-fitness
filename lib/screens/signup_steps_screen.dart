@@ -17,31 +17,48 @@ class _SignupStepsScreenState extends State<SignupStepsScreen> {
   int step = 1;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+void _nextStep() {
+  final weightText = _weightController.text.trim();
+  final goalWeightText = _weightGoalController.text.trim();
 
-  void _nextStep() {
-    if (step == 1) {
-      final currentWeight = double.tryParse(_weightController.text);
-      final goalWeight = double.tryParse(_weightGoalController.text);
+  if (step == 1) {
+    final currentWeight = double.tryParse(weightText);
+    final goalWeight = double.tryParse(goalWeightText);
 
-      if (currentWeight == null || goalWeight == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please enter valid weights.")),
-        );
-        return;
-      }
-
-      setState(() => step = 2);
-    } else if (step == 2) {
-      if (selectedGoal == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please select a goal.")),
-        );
-        return;
-      }
-
-      _saveUserData();
+    if (weightText.isEmpty || goalWeightText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("All fields are required.")),
+      );
+      return;
     }
+
+    if (currentWeight == null || goalWeight == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter valid numeric values.")),
+      );
+      return;
+    }
+
+    if (currentWeight <= 0 || goalWeight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Weights must be greater than zero.")),
+      );
+      return;
+    }
+
+    setState(() => step = 2);
+  } else if (step == 2) {
+    if (selectedGoal == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a goal before continuing.")),
+      );
+      return;
+    }
+
+    _saveUserData();
   }
+}
+
 
 void _saveUserData() async {
   final weightText = _weightController.text.trim();
