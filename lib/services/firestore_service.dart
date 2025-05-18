@@ -5,12 +5,10 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Helper to get formatted date string YYYY-MM-DD
   String _getFormattedDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  // Add a new meal to Firestore
   Future<void> addMeal(Map<String, dynamic> mealData) async {
     try {
       final user = _auth.currentUser;
@@ -22,11 +20,11 @@ class FirestoreService {
             .add(mealData);
       }
     } catch (e) {
+      print('Error adding meal: $e');  // Added error log
       throw Exception('Failed to add meal: $e');
     }
   }
 
-  // Streams all meals for the current user in real time from Firestore
   Stream<List<Map<String, dynamic>>> getMeals() {
     final user = _auth.currentUser;
     if (user != null) {
@@ -45,7 +43,6 @@ class FirestoreService {
     return const Stream.empty();
   }
 
-  // Update a meal
   Future<void> updateMeal(String mealId, Map<String, dynamic> updatedData) async {
     try {
       final user = _auth.currentUser;
@@ -58,11 +55,11 @@ class FirestoreService {
             .update(updatedData);
       }
     } catch (e) {
+      print('Error updating meal: $e');  // Added error log
       throw Exception('Failed to update meal: $e');
     }
   }
 
-  // Delete a meal
   Future<void> deleteMeal(String mealId) async {
     try {
       final user = _auth.currentUser;
@@ -75,6 +72,7 @@ class FirestoreService {
             .delete();
       }
     } catch (e) {
+      print('Error deleting meal: $e');  // Added error log
       throw Exception('Failed to delete meal: $e');
     }
   }
@@ -94,7 +92,6 @@ class FirestoreService {
         final userDocRef = _firestore.collection('users').doc(user.uid);
         final userSnapshot = await userDocRef.get();
 
-        // Set start weight only if not already present
         if (!userSnapshot.exists || !userSnapshot.data()!.containsKey('start_weight')) {
           await userDocRef.set({'start_weight': weightData['weight']}, SetOptions(merge: true));
         }
@@ -105,11 +102,11 @@ class FirestoreService {
         });
       }
     } catch (e) {
+      print('Error adding weight log: $e');  // Added error log
       throw Exception('Failed to add weight log: $e');
     }
   }
 
-  // Get the weight log for today
   Stream<Map<String, dynamic>?> getWeightLogForToday() {
     final user = _auth.currentUser;
     if (user != null) {
@@ -131,7 +128,6 @@ class FirestoreService {
     return Stream.value(null);
   }
 
-  // Update the weight log for today
   Future<void> updateWeightLog(Map<String, dynamic> updatedData) async {
     try {
       final user = _auth.currentUser;
@@ -146,11 +142,11 @@ class FirestoreService {
             .update(updatedData);
       }
     } catch (e) {
+      print('Error updating weight log: $e');  // Added error log
       throw Exception('Failed to update weight log: $e');
     }
   }
 
-  // Fetch all weight logs (sorted by timestamp)
   Future<List<Map<String, dynamic>>> getAllWeightLogs() async {
     final user = _auth.currentUser;
     if (user == null) return [];
@@ -160,8 +156,8 @@ class FirestoreService {
           .collection('users')
           .doc(user.uid)
           .collection('weight_logs')
-          .where('timestamp', isGreaterThan: Timestamp(0, 0)) // Filters missing timestamps
-          .orderBy('timestamp') // Sorts by timestamp
+          .where('timestamp', isGreaterThan: Timestamp(0, 0))
+          .orderBy('timestamp')
           .get();
 
       return query.docs.map((doc) => doc.data()).toList();
@@ -171,7 +167,6 @@ class FirestoreService {
     }
   }
 
-  // Fetch the start weight from Firestore
   Future<DocumentSnapshot> getStartWeight() async {
     final user = _auth.currentUser;
     if (user != null) {
