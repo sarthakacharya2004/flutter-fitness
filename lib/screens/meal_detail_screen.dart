@@ -81,18 +81,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // UI Improvement: added shadow to image container for better visual depth
             Container(
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
                 image: DecorationImage(
                   image: NetworkImage(widget.image),
                   fit: BoxFit.cover,
