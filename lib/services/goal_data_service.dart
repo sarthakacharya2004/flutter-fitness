@@ -25,16 +25,29 @@ Future<void> storeUserGoal(String userId, String goal) async {
 }
 
 
-  /// Retrieve the user's goal from Firestore. Returns 'general' if not found.
-  Future<String> getUserGoal(String userId) async {
-    try {
-      final doc = await _firestore.collection('users').doc(userId).get();
-      return doc.data()?['goal'] as String? ?? 'general';
-    } catch (e) {
-      debugPrint('Error getting user goal: $e');
+ /// Retrieve the user's goal from Firestore. Returns 'general' if not found or on error.
+Future<String> getUserGoal(String userId) async {
+  if (userId.isEmpty) {
+    debugPrint('Invalid userId provided.');
+    return 'general';
+  }
+
+  try {
+    final doc = await _firestore.collection('users').doc(userId).get();
+    final goal = doc.data()?['goal'];
+    if (goal is String && goal.isNotEmpty) {
+      return goal;
+    } else {
+      debugPrint('Goal not found or invalid for userId: $userId. Returning default "general".');
       return 'general';
     }
+  } catch (e, stackTrace) {
+    debugPrint('Error getting user goal: $e');
+    debugPrintStack(stackTrace: stackTrace);
+    return 'general';
   }
+}
+
 
   /// Fetch workouts matching the user's goal.
   Future<List<Map<String, dynamic>>> getWorkoutsByGoal(String goal) async {
