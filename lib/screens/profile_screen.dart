@@ -200,19 +200,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ListTile(
                 title: Text('Maintain'),
                 onTap: () {
-                  _updateGoal('Maintain');
+                  setState(() {
+                    goal = 'Maintain';
+                  });
+                  _saveProfile();
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
                 title: Text('Gain Muscles'),
                 onTap: () {
-                  _updateGoal('Gain Muscles');
+                  setState(() {
+                    goal = 'Gain Muscles';
+                  });
+                  _saveProfile();
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
                 title: Text('Lose Weight'),
                 onTap: () {
-                  _updateGoal('Lose Weight');
+                  setState(() {
+                    goal = 'Lose Weight';
+                  });
+                  _saveProfile();
+                  Navigator.pop(context);
                 },
               ),
             ],
@@ -220,20 +232,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
     );
-  }
-
-  void _updateGoal(String newGoal) {
-    if (goal != newGoal) {
-      setState(() {
-        goal = newGoal;
-      });
-      _notificationService.createActivityNotification(
-        'Profile',
-        'updated goal to $newGoal',
-      );
-      _saveProfile();
-    }
-    Navigator.pop(context);
   }
 
   // Show dialog to edit name and description
@@ -265,11 +263,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () {
+                String oldName = name;
+                String oldDescription = description;
+
                 setState(() {
                   name = nameController.text;
                   description = descriptionController.text;
                 });
+
                 _saveProfile(); // Save the updated name and description to Firestore
+
+                if (name != oldName) {
+                  _notificationService.createActivityNotification(
+                    'Profile',
+                    'updated name from "$oldName" to "$name"',
+                  );
+                }
+                if (description != oldDescription) {
+                  _notificationService.createActivityNotification(
+                    'Profile',
+                    'updated description',
+                  );
+                }
+
                 Navigator.pop(context);
               },
               child: const Text('Save'),
