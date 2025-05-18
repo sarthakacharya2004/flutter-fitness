@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class GoalService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Nutrition plans based on goalss 
+  // Nutrition plans categorized by user goals
   final Map<String, List<Map<String, dynamic>>> _goalNutrition = {
     'Lose Weight': [
       {
@@ -46,7 +46,7 @@ class GoalService {
         'recipe': '1. Turkey sandwich\n2. Mixed salad\n3. Fruit\n4. Yogurt',
       },
     ],
-    'Gain': [
+    'Gain Muscles': [
       {
         'title': 'High-Calorie Breakfast',
         'calories': '700 kcal',
@@ -68,22 +68,29 @@ class GoalService {
     ],
   };
 
-
-  // Get nutrition plans for specific goal
+  // Returns nutrition plan for the provided goal
   List<Map<String, dynamic>> getNutritionByGoal(String goal) {
     return _goalNutrition[goal] ?? [];
   }
 
-  // Update user's goal in Firestore
+  // Update user's selected goal in Firestore
   Future<void> updateUserGoal(String userId, String newGoal) async {
-    await _firestore.collection('users').doc(userId).update({
-      'goal': newGoal,
-    });
+    await _firestore.collection('users').doc(userId).update({'goal': newGoal});
   }
 
-  // Get user's current goal
-  Future<String> getUserGoal(String userId) async {
-    DocumentSnapshot doc = await _firestore.collection('users').doc(userId).get();
-    return doc.get('goal') as String;
+  // Retrieve user's current goal from Firestore
+  Future<String?> getUserGoal(String userId) async {
+    try {
+      DocumentSnapshot doc = await _firestore.collection('users').doc(userId).get();
+      return doc.get('goal') as String?;
+    } catch (e) {
+      debugPrint('Error fetching goal: $e');
+      return null;
+    }
+  }
+
+  // Get all available goals
+  List<String> getAllGoals() {
+    return _goalNutrition.keys.toList();
   }
 }
