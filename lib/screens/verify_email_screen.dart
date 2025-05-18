@@ -43,12 +43,17 @@ void dispose() {
 }
 
 
-  void _startEmailVerificationCheck() {
-    _checkEmailVerification();
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+ void _startEmailVerificationCheck() {
+  _checkEmailVerification();
+  _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+    if (mounted) {
       _checkEmailVerification();
-    });
-  }
+    } else {
+      timer.cancel();
+    }
+  });
+}
+
 
   Future<void> _checkEmailVerification() async {
     try {
