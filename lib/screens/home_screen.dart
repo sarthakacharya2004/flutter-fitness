@@ -453,18 +453,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _updateWaterIntake(double amount) async {
     if (!mounted) return;
-
     try {
-      final newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
+      double newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
       await waterService.saveWaterIntake(newIntake);
-
       if (!mounted) return;
 
+      // Update only water-related state
       setState(() {
         waterIntake = newIntake;
       });
 
-      // Fetch history in the background
+      // Fetch history in background without showing errors
       try {
         final history = await waterService.getLast7DaysIntake(waterGoal);
         if (mounted) {
@@ -472,11 +471,12 @@ class _HomeScreenState extends State<HomeScreen> {
             waterHistory = history;
           });
         }
-      } catch (_) {
-        // Silently ignore history errors
+      } catch (historyError) {
+        // Silently handle history fetch errors
       }
     } catch (e) {
       if (mounted) {
+        // Only show error if the main water intake update fails
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error updating water intake: $e")),
         );
