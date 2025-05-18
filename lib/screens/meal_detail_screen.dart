@@ -174,6 +174,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   void _toggleEditing() {
     setState(() {
+      if (_isEditing) {
+        // Reset controllers to original values when cancelling editing
+        _titleController.text = widget.title;
+        _caloriesController.text = widget.calories;
+        _timeController.text = widget.time;
+        _proteinController.text = widget.protein;
+        _recipeController.text = widget.recipe;
+      }
       _isEditing = !_isEditing;
     });
   }
@@ -187,7 +195,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         'protein': _proteinController.text,
         'recipe': _recipeController.text,
       });
-      
+
       _toggleEditing();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Meal updated successfully')),
