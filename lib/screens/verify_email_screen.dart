@@ -104,9 +104,16 @@ void dispose() {
 }
 
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
+ void _showMessage(String message, {bool isError = false}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
