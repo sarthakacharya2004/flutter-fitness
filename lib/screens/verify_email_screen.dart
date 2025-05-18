@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fitness_hub/screens/login_screen.dart';
@@ -14,106 +15,103 @@ class VerifyEmailScreen extends StatefulWidget {
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isLoading = true;
-  bool _emailVerified = false;
   late Timer _timer;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _emailVerified = false;
 
- @override
-void initState() {
-  super.initState();
-
-  // Start periodic email verification check
-  _startEmailVerificationCheck();
-
-  // Listen for auth state changes and navigate if verified
-  _auth.authStateChanges().listen((User? user) {
-    if (mounted && user != null && user.emailVerified) {
-      _navigateToNextScreen();
-    }
-  });
-}
-
-@override
-void dispose() {
-  if (_timer.isActive) {
-    _timer.cancel();
+  @override
+  void initState() {
+    super.initState();
+    _startVerificationCheck();
+    // Listen for auth state changes (for when user returns to app after verifying)
+    _auth.authStateChanges().listen((User? user) {
+      if (user != null && user.emailVerified) {
+        _navigateToNextScreen();
+      }
+    });
   }
-  super.dispose();
-}
 
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
 
- void _startEmailVerificationCheck() {
-  _checkEmailVerification();
-  _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
-    if (mounted) {
+  void _startVerificationCheck() {
+    // Check immediately
+    _checkEmailVerification();
+    
+    // Then check every 5 seconds
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _checkEmailVerification();
-    } else {
-      timer.cancel();
-    }
-  });
-}
-
+    });
+  }
 
   Future<void> _checkEmailVerification() async {
-    try {
-      await _auth.currentUser?.reload();
-      final user = _auth.currentUser;
+    User? user = _auth.currentUser;
 
-      if (user?.emailVerified == true && !_emailVerified) {
-        setState(() {
-          _emailVerified = true;
-          _isLoading = false;
-        });
-        _navigateToNextScreen();
-      } else {
+    if (user == null) {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginScreen()),
+        );
+      }
+      return;
+    }
+
+    try {
+      // Force refresh the user's verification status
+      await user.reload();
+      user = _auth.currentUser;
+
+      if (user != null && user.emailVerified && !_emailVerified) {
+        if (mounted) {
+          setState(() {
+            _emailVerified = true;
+            _isLoading = false;
+          });
+          _navigateToNextScreen();
+        }
+      } else if (mounted) {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      debugPrint('Error checking email verification: $e');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  void _navigateToNextScreen() {
+    _timer.cancel();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SignupStepsScreen()),
+    );
   }
 
   Future<void> _resendVerificationEmail() async {
     try {
       setState(() => _isLoading = true);
-      final user = _auth.currentUser;
-
+      User? user = _auth.currentUser;
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
-        _showMessage("Verification email resent!");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Verification email resent!")),
+        );
       }
     } catch (e) {
-      _showMessage("Failed to resend email: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to resend email: $e")),
+      );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
-
- void _navigateToNextScreen() {
-  if (_timer.isActive) {
-    _timer.cancel();
-  }
-  if (mounted) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const SignupStepsScreen()),
-    );
-  }
-}
-
-
- void _showMessage(String message, {bool isError = false}) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      backgroundColor: isError ? Colors.red : Colors.green,
-      duration: const Duration(seconds: 3),
-    ),
-  );
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +129,8 @@ void dispose() {
                   children: [
                     Icon(Icons.arrow_back, color: Colors.white),
                     SizedBox(width: 5),
-                    Text("Back", style: TextStyle(color: Colors.white, fontSize: 16)),
+                    Text("Back",
+                        style: TextStyle(color: Colors.white, fontSize: 16)),
                   ],
                 ),
               ),
@@ -167,17 +166,21 @@ void dispose() {
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 30),
-                    _isLoading
-                        ? const CircularProgressIndicator()
-                        : Column(
-                            children: [
-                              const Text("Haven't received the email?", style: TextStyle(fontSize: 14)),
-                              TextButton(
-                                onPressed: _resendVerificationEmail,
-                                child: const Text("Resend Verification Email"),
-                              ),
-                            ],
+                    if (_isLoading)
+                      const CircularProgressIndicator()
+                    else
+                      Column(
+                        children: [
+                          const Text(
+                            "Haven't received the email?",
+                            style: TextStyle(fontSize: 14),
                           ),
+                          TextButton(
+                            onPressed: _resendVerificationEmail,
+                            child: const Text("Resend Verification Email"),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
