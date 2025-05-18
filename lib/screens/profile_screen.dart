@@ -158,28 +158,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Save profile to Firestore
-  Future<void> _saveProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({
-        'name': name,
-        'description': description,
-        'weight': weight,
-        'height': height,
-        'bmi': bmi,
-        'goal': goal,
-      });
-      // Optional: Show success message (can add later if needed)
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating profile: $e')),
-        );
+  _saveProfile() async {
+    User? user =
+        FirebaseAuth.instance.currentUser; // Get current logged-in user
+    if (user != null) {
+      // Update user profile in Firestore
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+          'name': name,
+          'description': description,
+          'weight': weight,
+          'height': height,
+          'bmi': bmi,
+          'goal': goal,
+        });
+        // Show success message
+      } catch (e) {
+        // Show error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error updating profile: $e')),
+          );
+        }
       }
     }
   }
@@ -197,31 +200,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ListTile(
                 title: Text('Maintain'),
                 onTap: () {
-                  setState(() {
-                    goal = 'Maintain';
-                  });
-                  _saveProfile();
-                  Navigator.pop(context);
+                  _updateGoal('Maintain');
                 },
               ),
               ListTile(
                 title: Text('Gain Muscles'),
                 onTap: () {
-                  setState(() {
-                    goal = 'Gain Muscles';
-                  });
-                  _saveProfile();
-                  Navigator.pop(context);
+                  _updateGoal('Gain Muscles');
                 },
               ),
               ListTile(
                 title: Text('Lose Weight'),
                 onTap: () {
-                  setState(() {
-                    goal = 'Lose Weight';
-                  });
-                  _saveProfile();
-                  Navigator.pop(context);
+                  _updateGoal('Lose Weight');
                 },
               ),
             ],
@@ -229,6 +220,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
     );
+  }
+
+  void _updateGoal(String newGoal) {
+    if (goal != newGoal) {
+      setState(() {
+        goal = newGoal;
+      });
+      _notificationService.createActivityNotification(
+        'Profile',
+        'updated goal to $newGoal',
+      );
+      _saveProfile();
+    }
+    Navigator.pop(context);
   }
 
   // Show dialog to edit name and description
