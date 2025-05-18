@@ -34,12 +34,14 @@ void initState() {
   });
 }
 
-
-  @override
-  void dispose() {
+@override
+void dispose() {
+  if (_timer.isActive) {
     _timer.cancel();
-    super.dispose();
   }
+  super.dispose();
+}
+
 
   void _startEmailVerificationCheck() {
     _checkEmailVerification();
