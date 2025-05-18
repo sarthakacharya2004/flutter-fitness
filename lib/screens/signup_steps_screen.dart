@@ -119,11 +119,16 @@ void _saveUserData() async {
 }
 
 
-  void _previousStep() {
-    if (step > 1) {
-      setState(() => step--);
-    }
+ void _previousStep() {
+  if (step > 1) {
+    setState(() => step--);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("You are already at the first step.")),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
