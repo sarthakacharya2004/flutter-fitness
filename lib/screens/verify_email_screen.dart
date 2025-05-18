@@ -91,13 +91,18 @@ void dispose() {
     }
   }
 
-  void _navigateToNextScreen() {
+ void _navigateToNextScreen() {
+  if (_timer.isActive) {
     _timer.cancel();
+  }
+  if (mounted) {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const SignupStepsScreen()),
     );
   }
+}
+
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
