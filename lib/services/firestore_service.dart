@@ -5,7 +5,6 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Private helper to get current user or throw if null
   User? _getCurrentUser() {
     return _auth.currentUser;
   }
