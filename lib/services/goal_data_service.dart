@@ -1,108 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 
 class GoalDataService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
- /// Stores or updates the user's goal in Firestore with validation and error logging.
-Future<void> storeUserGoal(String userId, String goal) async {
-  if (userId.isEmpty || goal.isEmpty) {
-    debugPrint('Invalid userId or goal provided.');
-    return;
+  Future<void> storeGoalData(String userId, String goal) async {
+    await _firestore.collection('users').doc(userId).set({
+      'goal': goal,
+    }, SetOptions(merge: true));
   }
 
-  try {
-    await _firestore.collection('users').doc(userId).set(
-      {'goal': goal},
-      SetOptions(merge: true),
-    );
-    debugPrint('User goal updated successfully for userId: $userId');
-  } catch (e, stackTrace) {
-    debugPrint('Failed to store user goal: $e');
-    debugPrintStack(stackTrace: stackTrace);
-    rethrow;
-  }
-}
-
-
- /// Retrieve the user's goal from Firestore. Returns 'general' if not found or on error.
-Future<String> getUserGoal(String userId) async {
-  if (userId.isEmpty) {
-    debugPrint('Invalid userId provided.');
-    return 'general';
-  }
-
-  try {
+  Future<String> getUserGoal(String userId) async {
     final doc = await _firestore.collection('users').doc(userId).get();
-    final goal = doc.data()?['goal'];
-    if (goal is String && goal.isNotEmpty) {
-      return goal;
-    } else {
-      debugPrint('Goal not found or invalid for userId: $userId. Returning default "general".');
-      return 'general';
-    }
-  } catch (e, stackTrace) {
-    debugPrint('Error getting user goal: $e');
-    debugPrintStack(stackTrace: stackTrace);
-    return 'general';
-  }
-}
-
-
-/// Fetch workouts matching the user's goal.
-/// Returns an empty list if no workouts found or on error.
-Future<List<Map<String, dynamic>>> getWorkoutsByGoal(String goal) async {
-  if (goal.isEmpty) {
-    debugPrint('Empty goal provided to getWorkoutsByGoal. Returning empty list.');
-    return [];
+    return doc.data()?['goal'] ?? 'general';
   }
 
-  try {
-    final querySnapshot = await _firestore
-        .collection('workouts')
-        .where('goal', isEqualTo: goal)
-        .get();
-
-    if (querySnapshot.docs.isEmpty) {
-      debugPrint('No workouts found for goal: $goal');
-      return [];
-    }
-
-    return querySnapshot.docs.map((doc) => doc.data()).toList();
-  } catch (e, stackTrace) {
-    debugPrint('Error fetching workouts for goal "$goal": $e');
-    debugPrintStack(stackTrace: stackTrace);
-    return [];
-  }
-}
-
-
-/// Fetch nutrition plans matching the user's goal.
-/// Returns an empty list if no nutrition plans found or on error.
-Future<List<Map<String, dynamic>>> getNutritionByGoal(String goal) async {
-  if (goal.isEmpty) {
-    debugPrint('Empty goal provided to getNutritionByGoal. Returning empty list.');
-    return [];
+  Future<List<Map<String, dynamic>>> getWorkoutsByGoal(String goal) async {
+    final query = await _firestore.collection('workouts').where('goal', isEqualTo: goal).get();
+    return query.docs.map((doc) => doc.data()).toList();
   }
 
-  try {
-    final querySnapshot = await _firestore
-        .collection('nutrition')
-        .where('goal', isEqualTo: goal)
-        .get();
-
-    if (querySnapshot.docs.isEmpty) {
-      debugPrint('No nutrition plans found for goal: $goal');
-      return [];
-    }
-
-    return querySnapshot.docs.map((doc) => doc.data()).toList();
-  } catch (e, stackTrace) {
-    debugPrint('Error fetching nutrition for goal "$goal": $e');
-    debugPrintStack(stackTrace: stackTrace);
-    return [];
+  Future<List<Map<String, dynamic>>> getNutritionByGoal(String goal) async {
+    final query = await _firestore.collection('nutrition').where('goal', isEqualTo: goal).get();
+    return query.docs.map((doc) => doc.data()).toList();
   }
-}
-/// Fetch all available goals from Firestore.
-/// Returns a list of goals or an empty list on error.  
 }
