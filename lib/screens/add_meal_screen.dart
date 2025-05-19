@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddMealScreen extends StatefulWidget {
   const AddMealScreen({super.key});
@@ -74,6 +78,39 @@ class _AddMealScreenState extends State<AddMealScreen> {
     }
   }
 
+  Future<void> _selectImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageUrl = pickedFile.path;
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('imageUrl', _imageUrl);
+    }
+  }
+
+  Widget _buildImagePicker() {
+    return GestureDetector(
+      onTap: () async {
+        final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+        if (pickedFile != null) {
+          setState(() {
+            _imageUrl = pickedFile.path;
+          });
+          _saveImageUrl(pickedFile.path);
+        }
+      },
+      child: _imageUrl.isEmpty
+          ? const Icon(Icons.photo_camera, size: 50)
+          : Image.file(
+              File(_imageUrl),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const Icon(Icons.error_outline, size: 50),
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,31 +132,18 @@ class _AddMealScreenState extends State<AddMealScreen> {
             children: [
               // Meal Image Placeholder
               GestureDetector(
-                onTap: _showImageSourceDialog,
+                onTap: _selectImage,
                 child: Container(
                   height: 200,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(16),
+                    image: DecorationImage(
+                      image: _imageUrl.isNotEmpty
+                          ? FileImage(File(_imageUrl))
+                          : AssetImage('assets/placeholder.png') as ImageProvider,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  child: _imageUrl.isEmpty
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.add_a_photo, size: 50),
-                            SizedBox(height: 8),
-                            Text('Add Photo'),
-                          ],
-                        )
-                      : ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.network(
-                            _imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => 
-                              const Icon(Icons.error_outline, size: 50),
-                          ),
-                        ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -308,12 +332,53 @@ class _AddMealScreenState extends State<AddMealScreen> {
 
     if (source != null) {
       // Implement actual image picking here
-      // For now, we'll use a placeholder
-      setState(() {
-        _imageUrl = 'https://via.placeholder.com/400x300?text=Meal+Image';
-      });
+      final pickedFile = await ImagePicker().pickImage(source: source);
+      if (pickedFile != null) {
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = 'meal_image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final savedImage = await File(pickedFile.path).copy('${directory.path}/$fileName');
+        setState(() {
+          _imageUrl = 'file://${savedImage.path}';
+        });
+      }
     }
   }
-}
 
-enum ImageSource { gallery, camera }
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final directory = await getApplicationDocumentsDirectory();
+      final imagePath = '${directory.path}/${pickedFile.name}';
+      final imageFile = File(pickedFile.path);
+      await imageFile.copy(imagePath);
+
+      setState(() {
+        _imageUrl = imagePath;
+      });
+
+      // Save image path to local storage
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('mealImagePath', imagePath);
+    }
+  }
+
+  final TextEditingController _imageUrlController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageUrl();
+  }
+
+  Future<void> _loadImageUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _imageUrl = prefs.getString('imageUrl') ?? '';
+    });
+  }
+
+  Future<void> _saveImageUrl(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('imageUrl', path);
+  }
+}

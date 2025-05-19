@@ -1,11 +1,14 @@
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'nutrition_screen.dart';
 import 'workout_screen.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
 import '../services/notification_service.dart';
+import '../services/local_storage_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,9 +24,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String goal = ''; // Goal from database
   String name = ''; // Name from database
   String description = ''; // Description from database
+  String profileImageUrl = ''; // Profile image URL from database
   bool isLoading = true;
 
   final NotificationService _notificationService = NotificationService();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -37,6 +42,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       isLoading = true;
     });
     
+    // Load profile image from local storage first
+    try {
+      String? savedImage = await LocalStorageService.getProfileImage();
+      if (savedImage != null) {
+        setState(() {
+          profileImageUrl = savedImage;
+        });
+      }
+    } catch (e) {
+      print('Error loading profile image from local storage: $e');
+    }
+
     User? user = FirebaseAuth.instance.currentUser; // Get current logged-in user
     if (user != null) {
       try {
@@ -150,27 +167,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Save profile to Firestore
   _saveProfile() async {
-    User? user = FirebaseAuth.instance.currentUser; // Get current logged-in user
+    User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // Update user profile in Firestore
       try {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        // Convert weight, height, and bmi to numeric values for Firestore
+        double? weightNum = double.tryParse(weight);
+        double? heightNum = double.tryParse(height);
+        double? bmiNum = double.tryParse(bmi);
+
+        // Create a map of the data to update
+        Map<String, dynamic> updateData = {
           'name': name,
           'description': description,
-          'weight': weight,
-          'height': height,
-          'bmi': bmi,
           'goal': goal,
-        });
-        // Show success message
-        
+        };
+
+        // Only add numeric values if they are valid
+        if (weightNum != null) updateData['weight'] = weightNum;
+        if (heightNum != null) updateData['height'] = heightNum;
+        if (bmiNum != null) updateData['bmi'] = bmiNum;
+
+        // Update Firestore document
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update(updateData);
       } catch (e) {
-        // Show error message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating profile: $e')),
+            SnackBar(content: Text('Error updating profile: ${e.toString()}')),
           );
         }
+        print('Error updating profile: $e');
       }
     }
   }
@@ -340,6 +365,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.of(context).pop(); // Close the dialog
+                // We don't clear the profile image from local storage during logout
+                // This ensures it persists for the next login
                 await FirebaseAuth.instance.signOut();
                 // Navigate to login screen or welcome page
                 Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
@@ -420,14 +447,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Profile header widget
+  // Function to handle profile image selection and local storage
+  Future<void> _changeProfileImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800, // Limit image width
+      maxHeight: 800, // Limit image height
+      imageQuality: 70, // Compress image quality to 70%
+    );
+    if (image != null) {
+      setState(() {
+        isLoading = true;
+      });
+
+      try {
+        final bytes = await image.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        
+        // Save image to local storage only
+        await LocalStorageService.saveProfileImage(base64Image);
+        
+        // Update state with base64 image
+        setState(() {
+          profileImageUrl = base64Image;
+        });
+
+        // Create notification for profile image update
+        _notificationService.createActivityNotification(
+          'Profile',
+          'updated profile picture',
+        );
+
+        // Update profile in Firestore without the image
+        await _saveProfile();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error updating profile image')),
+          );
+        }
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
   Widget _buildProfileHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundImage: AssetImage('assets/profile_image.png'),
-            radius: 40,
+          GestureDetector(
+            onTap: _changeProfileImage,
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  backgroundImage: profileImageUrl.isNotEmpty
+                      ? MemoryImage(base64Decode(profileImageUrl))
+                      : const AssetImage('assets/profile_image.png') as ImageProvider,
+                  radius: 40,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: 16),
           Column(

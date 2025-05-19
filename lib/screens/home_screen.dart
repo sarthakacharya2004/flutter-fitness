@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'workout_screen.dart';
 import 'notification_screen.dart';
 import 'package:fitness_hub/services/firestore_service.dart';
 import 'package:fitness_hub/services/waterintake_service.dart';
+import 'package:fitness_hub/services/local_storage_service.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -25,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool showWeekly = false;
   final FirestoreService _firestoreService = FirestoreService();
   String userName = '';
+  String profileImageUrl = '';
 
   // Dummy Weight Data
   final List<FlSpot> weightData = [
@@ -50,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadUserName();
     _loadWaterData();
+    _loadProfileImage();
 
     // Save initial weight from signup if provided
     if (widget.initialWeight != null) {
@@ -66,6 +70,19 @@ class _HomeScreenState extends State<HomeScreen> {
           userName = doc['name'] ?? '';
         });
       }
+    }
+  }
+
+  Future<void> _loadProfileImage() async {
+    try {
+      String? savedImage = await LocalStorageService.getProfileImage();
+      if (savedImage != null) {
+        setState(() {
+          profileImageUrl = savedImage;
+        });
+      }
+    } catch (e) {
+      print('Error loading profile image from local storage: $e');
     }
   }
 
@@ -111,8 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     MaterialPageRoute(builder: (context) => const ProfileScreen()),
                   );
                 },
-                child: const CircleAvatar(
-                  backgroundImage: AssetImage('assets/profile_image.png'),
+                child: CircleAvatar(
+                  backgroundImage: profileImageUrl.isNotEmpty
+                      ? MemoryImage(base64Decode(profileImageUrl))
+                      : const AssetImage('assets/profile_image.png') as ImageProvider,
                   radius: 25,
                 ),
               ),

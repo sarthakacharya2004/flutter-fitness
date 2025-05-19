@@ -1,6 +1,7 @@
 import 'package:fitness_hub/services/streak_service.dart';
 import 'package:fitness_hub/services/goal_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fitness_hub/services/workout_history_service.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'nutrition_screen.dart';
@@ -413,6 +414,37 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
 
+  Future<void> _showWorkoutHistory() async {
+    final history = await WorkoutHistoryService().getWorkoutHistory();
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Text(
+              'Workout History',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: history.length,
+                itemBuilder: (context, index) {
+                  final workout = history[index];
+                  return ListTile(
+                    title: Text(workout['workout_name']),
+                    subtitle: Text('Duration: ${workout['duration']}s'),
+                    trailing: Text(workout['date_completed'].toDate().toString()),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -456,8 +488,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _loadStreakInfo,
+            icon: Icon(Icons.history),
+            onPressed: _showWorkoutHistory,
           ),
         ],
       ),

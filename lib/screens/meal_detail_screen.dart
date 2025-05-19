@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:fitness_hub/services/firestore_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MealDetailScreen extends StatefulWidget {
   final String mealId;
@@ -33,6 +36,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   late TextEditingController _timeController;
   late TextEditingController _proteinController;
   late TextEditingController _recipeController;
+  String _imageUrl = '';
 
   @override
   void initState() {
@@ -42,6 +46,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     _timeController = TextEditingController(text: widget.time);
     _proteinController = TextEditingController(text: widget.protein);
     _recipeController = TextEditingController(text: widget.recipe);
+    _loadImageUrl();
+  }
+
+  Future<void> _loadImageUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _imageUrl = prefs.getString('imageUrl') ?? widget.image;
+    });
   }
 
   @override
@@ -86,7 +98,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: DecorationImage(
-                  image: NetworkImage(widget.image),
+                  image: _imageUrl.isNotEmpty
+                      ? FileImage(File(_imageUrl))
+                      : AssetImage('assets/placeholder.png') as ImageProvider,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -228,5 +242,15 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         );
       }
     }
+  }
+  Widget _buildMealImage() {
+    return _imageUrl.isEmpty
+        ? const Icon(Icons.error_outline, size: 50)
+        : Image.file(
+            File(_imageUrl),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => 
+              const Icon(Icons.error_outline, size: 50),
+          );
   }
 }

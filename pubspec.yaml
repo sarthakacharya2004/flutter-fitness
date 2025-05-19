@@ -40,10 +40,10 @@ dependencies:
   # flutter_facebook_auth: ^6.1.0
   # sign_in_with_apple: ^5.0.0
   fl_chart: ^0.63.0
-  shared_preferences: ^2.0.15
-  image_picker: ^1.0.4 # For selecting images from gallery/camera
+  shared_preferences: ^2.5.3
+  image_picker: ^1.1.2 # For selecting images from gallery/camera
   cached_network_image: ^3.2.3 # For efficient image loading
-  firebase_storage: ^12.4.4
+  firebase_storage: ^12.4.5
   cloud_firestore: ^5.6.5
   firebase_core: ^3.12.1
   flutter_gif: 0.0.4
@@ -75,17 +75,28 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/facebook.png
-    - assets/google.png
     - assets/apple.png
+    - assets/bench-press.png
+    - assets/chest-back.png
+    - assets/core-circuit.png
+    - assets/core-workout.png
+    - assets/facebook.png
+    - assets/full-body-circuit.png
+    - assets/full-body-hiit.png
+    - assets/full-body.png
+    - assets/google.png
+    - assets/hiit-workout.png
+    - assets/interval-running.png
+    - assets/jump-rope.png
+    - assets/leg-day.png
+    - assets/lower-body.png
     - assets/mainlogo.png
     - assets/profile_image.png
     - assets/scrambled-eggs.png
-    - assets/full-body.png
+    - assets/squat-deadlift.png
+    - assets/tabata.png
+    - assets/upper-body.png
     - assets/core-workout.png
-    - assets/hiit-workout.png
-    - assets/gifs/pushups.gif
-    - assets/gifs/squats.gif
 
   # To add assets to your application, add an assets section, like this:
   # assets:
