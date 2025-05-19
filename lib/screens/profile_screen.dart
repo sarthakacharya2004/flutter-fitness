@@ -371,7 +371,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Profile content (Profile header, Statistics, etc.)
   Widget _buildProfileContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0), // Added padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
