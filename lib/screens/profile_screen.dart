@@ -450,33 +450,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
             radius: 40,
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    name.isNotEmpty
-                        ? name
-                        : 'Loading...', // Display the name fetched from Firestore
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+          Expanded(
+            // ✅ Minimal change: wrap Column with Expanded to avoid overflow
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      // ✅ Also wrap Text with Expanded inside Row
+                      child: Text(
+                        name.isNotEmpty
+                            ? name
+                            : 'Loading...', // Display the name fetched from Firestore
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis, // Prevent overflow
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: _showEditProfileDialog, // Show edit dialog
-                  ),
-                ],
-              ),
-              Text(
-                description,
-                style: const TextStyle(
-                  color: Color.fromARGB(255, 105, 105, 105),
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: _showEditProfileDialog, // Show edit dialog
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 105, 105, 105),
+                  ),
+                  overflow:
+                      TextOverflow.ellipsis, // ✅ Prevent description overflow
+                ),
+              ],
+            ),
           ),
         ],
       ),
