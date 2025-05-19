@@ -341,8 +341,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Show confirmation dialog
     showDialog(
       context: context,
-      barrierDismissible:
-          false, // Prevent dialog from closing by tapping outside
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Logout'),
@@ -373,6 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Profile content (Profile header, Statistics, etc.)
   Widget _buildProfileContent() {
     return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0), // Added padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
