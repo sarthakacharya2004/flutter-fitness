@@ -318,13 +318,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: _logoutUser,
-              ),
-            ],
+          IconButton(
+            // Removed unnecessary Row wrapper
+            icon: const Icon(Icons.logout),
+            onPressed: _logoutUser,
           ),
           IconButton(
             icon: const Icon(Icons.settings),
