@@ -36,22 +36,22 @@ class WorkoutHistoryService {
   }
 
   // Get all workout history
-  Stream<List<Map<String, dynamic>>> getWorkoutHistory() {
+  Future<List<Map<String, dynamic>>> getWorkoutHistory() async {
     final user = _auth.currentUser;
-    if (user == null) return const Stream.empty();
+    if (user == null) return [];
 
-    return _firestore
+    final snapshot = await _firestore
         .collection('users')
         .doc(user.uid)
         .collection('workout_history')
         .orderBy('date_completed', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {
+        .get();
+
+    return snapshot.docs.map((doc) => {
                   'id': doc.id,
                   ...doc.data(),
                 })
-            .toList());
+            .toList();
   }
 
   // Get recent workouts (last 7 days)
@@ -69,11 +69,12 @@ class WorkoutHistoryService {
           .orderBy('date_completed', descending: true)
           .get();
 
-      return query.docs.map((doc) => doc.data()).toList();
+      return query.docs.map((doc) => doc.data()).toList();;
     } catch (e) {
       throw Exception('Failed to get recent workouts: $e');
     }
   }
+
   // Get total workout count
   Future<int> getTotalWorkoutsCompleted() async {
   final user = _auth.currentUser;

@@ -58,12 +58,11 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       {
         'name': 'Warm-up',
         'duration': 60,
-        'image': 'assets/warmup.png',
+        'image': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
         'instructions': 'Prepare your body with light movements',
       },
     ];
     
-    // Add exercises based on the workout type - this is just a sample
     final workoutType = widget.workout['title'];
     
     if (workoutType.contains('Upper Body')) {
@@ -71,19 +70,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Push-ups',
           'duration': 45,
-          'image': 'assets/pushups.png',
+          'image': 'https://images.unsplash.com/photo-1598971639058-a152c5ab2327?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 10-12 reps',
         },
         {
           'name': 'Dumbbell Rows',
           'duration': 60,
-          'image': 'assets/rows.png',
+          'image': 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 12 reps each arm',
         },
         {
           'name': 'Shoulder Press',
           'duration': 60,
-          'image': 'assets/shoulder-press.png',
+          'image': 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 10 reps',
         },
       ]);
@@ -92,19 +91,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Squats',
           'duration': 60,
-          'image': 'assets/squats.png',
+          'image': 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 15 reps',
         },
         {
           'name': 'Lunges',
           'duration': 60,
-          'image': 'assets/lunges.png',
+          'image': 'https://images.unsplash.com/photo-1517637382994-f02da38c6728?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 10 reps each leg',
         },
         {
           'name': 'Glute Bridges',
           'duration': 45,
-          'image': 'assets/glute-bridges.png',
+          'image': 'https://images.unsplash.com/photo-1571945153237-4929e783af4a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 12 reps',
         },
       ]);
@@ -113,19 +112,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Planks',
           'duration': 45,
-          'image': 'assets/plank.png',
+          'image': 'https://images.unsplash.com/photo-1566241477600-ac026ad43874?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 30 seconds',
         },
         {
           'name': 'Russian Twists',
           'duration': 45,
-          'image': 'assets/russian-twists.png',
+          'image': 'https://images.unsplash.com/photo-1544033527-b192daee1f5b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 15 reps each side',
         },
         {
           'name': 'Leg Raises',
           'duration': 45,
-          'image': 'assets/leg-raises.png',
+          'image': 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 12 reps',
         },
       ]);
@@ -134,25 +133,25 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Jumping Jacks',
           'duration': 45,
-          'image': 'assets/jumping-jacks.png',
+          'image': 'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '30 seconds full intensity',
         },
         {
           'name': 'High Knees',
           'duration': 30,
-          'image': 'assets/high-knees.png',
+          'image': 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '30 seconds full intensity',
         },
         {
           'name': 'Mountain Climbers',
           'duration': 30,
-          'image': 'assets/mountain-climbers.png',
+          'image': 'https://images.unsplash.com/photo-1434596922112-19c563067271?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '30 seconds full intensity',
         },
         {
           'name': 'Burpees',
           'duration': 45,
-          'image': 'assets/burpees.png',
+          'image': 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '30 seconds full intensity',
         },
       ]);
@@ -162,19 +161,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Jumping Jacks',
           'duration': 45,
-          'image': 'assets/jumping-jacks.png',
+          'image': 'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '30 seconds full intensity',
         },
         {
           'name': 'Push-ups',
           'duration': 45,
-          'image': 'assets/pushups.png',
+          'image': 'https://images.unsplash.com/photo-1598971639058-a152c5ab2327?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 10-12 reps',
         },
         {
           'name': 'Squats',
           'duration': 60,
-          'image': 'assets/squats.png',
+          'image': 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 15 reps',
         },
       ]);
@@ -184,7 +183,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     _exercises.add({
       'name': 'Cooldown',
       'duration': 60,
-      'image': 'assets/cooldown.png',
+      'image': 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
       'instructions': 'Stretch and slow your breathing',
     });
     
@@ -391,7 +390,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(15),
                             image: DecorationImage(
-                              image: AssetImage(currentExercise['image']),
+                              image: NetworkImage(currentExercise['image']),
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -534,7 +533,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                                   color: Colors.grey[300],
                                   borderRadius: BorderRadius.circular(8),
                                   image: DecorationImage(
-                                    image: AssetImage(
+                                    image: NetworkImage(
                                       _isBreak
                                           ? _exercises[_currentExerciseIndex + 1]['image']
                                           : _exercises[_currentExerciseIndex < _exercises.length - 1

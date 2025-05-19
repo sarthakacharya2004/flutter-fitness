@@ -1,11 +1,14 @@
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'nutrition_screen.dart';
 import 'workout_screen.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
 import '../services/notification_service.dart';
+import '../services/local_storage_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,9 +24,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String goal = ''; // Goal from database
   String name = ''; // Name from database
   String description = ''; // Description from database
+  String profileImageUrl = ''; // Profile image URL from database
   bool isLoading = true;
 
   final NotificationService _notificationService = NotificationService();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -36,26 +41,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       isLoading = true;
     });
+    
+    // Load profile image from local storage first
+    try {
+      String? savedImage = await LocalStorageService.getProfileImage();
+      if (savedImage != null) {
+        setState(() {
+          profileImageUrl = savedImage;
+        });
+      }
+    } catch (e) {
+      print('Error loading profile image from local storage: $e');
+    }
 
-    User? user =
-        FirebaseAuth.instance.currentUser; // Get current logged-in user
+    User? user = FirebaseAuth.instance.currentUser; // Get current logged-in user
     if (user != null) {
       try {
         // Fetch the user profile from Firestore
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
         if (userDoc.exists) {
-          Map<String, dynamic> userData =
-              userDoc.data() as Map<String, dynamic>;
+          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
           setState(() {
             name = userData['name'] ?? ''; // Fetch name from Firestore
             description = userData['description'] ?? ''; // Fetch description
-            weight = userData['weight']?.toString() ??
-                ''; // Fetch weight from Firestore
-            height = userData['height']?.toString() ??
-                ''; // Fetch height from Firestore
+            weight = userData['weight']?.toString() ?? ''; // Fetch weight from Firestore
+            height = userData['height']?.toString() ?? ''; // Fetch height from Firestore
             bmi = userData['bmi']?.toString() ?? ''; // Fetch BMI from Firestore
             goal = userData['goal'] ?? ''; // Fetch goal from Firestore
           });
@@ -119,8 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       double? weightVal = double.tryParse(weight);
                       double? heightVal = double.tryParse(height);
                       if (weightVal != null && heightVal != null) {
-                        double bmiVal =
-                            weightVal / ((heightVal / 100) * (heightVal / 100));
+                        double bmiVal = weightVal / ((heightVal / 100) * (heightVal / 100));
                         bmi = bmiVal.toStringAsFixed(1);
                       }
                     }
@@ -131,8 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       double? weightVal = double.tryParse(weight);
                       double? heightVal = double.tryParse(height);
                       if (weightVal != null && heightVal != null) {
-                        double bmiVal =
-                            weightVal / ((heightVal / 100) * (heightVal / 100));
+                        double bmiVal = weightVal / ((heightVal / 100) * (heightVal / 100));
                         bmi = bmiVal.toStringAsFixed(1);
                       }
                     }
@@ -159,30 +167,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Save profile to Firestore
   _saveProfile() async {
-    User? user =
-        FirebaseAuth.instance.currentUser; // Get current logged-in user
+    User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // Update user profile in Firestore
       try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
+        // Convert weight, height, and bmi to numeric values for Firestore
+        double? weightNum = double.tryParse(weight);
+        double? heightNum = double.tryParse(height);
+        double? bmiNum = double.tryParse(bmi);
+
+        // Create a map of the data to update
+        Map<String, dynamic> updateData = {
           'name': name,
           'description': description,
-          'weight': weight,
-          'height': height,
-          'bmi': bmi,
           'goal': goal,
-        });
-        // Show success message
+        };
+
+        // Only add numeric values if they are valid
+        if (weightNum != null) updateData['weight'] = weightNum;
+        if (heightNum != null) updateData['height'] = heightNum;
+        if (bmiNum != null) updateData['bmi'] = bmiNum;
+
+        // Update Firestore document
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update(updateData);
       } catch (e) {
-        // Show error message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating profile: $e')),
+            SnackBar(content: Text('Error updating profile: ${e.toString()}')),
           );
         }
+        print('Error updating profile: $e');
       }
     }
   }
@@ -237,8 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Show dialog to edit name and description
   void _showEditProfileDialog() {
     TextEditingController nameController = TextEditingController(text: name);
-    TextEditingController descriptionController =
-        TextEditingController(text: description);
+    TextEditingController descriptionController = TextEditingController(text: description);
 
     showDialog(
       context: context,
@@ -255,8 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: descriptionController,
-                decoration:
-                    const InputDecoration(hintText: 'Enter new description'),
+                decoration: const InputDecoration(hintText: 'Enter new description'),
               ),
             ],
           ),
@@ -302,8 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : Column(
                 children: [
                   _buildTopBar(context),
-                  Expanded(
-                      child: _buildProfileContent()), // This prevents overflow
+                  Expanded(child: _buildProfileContent()), // This prevents overflow
                   _buildBottomNavBar(context),
                 ],
               ),
@@ -355,10 +365,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.of(context).pop(); // Close the dialog
+                // We don't clear the profile image from local storage during logout
+                // This ensures it persists for the next login
                 await FirebaseAuth.instance.signOut();
                 // Navigate to login screen or welcome page
-                Navigator.of(context)
-                    .pushNamedAndRemoveUntil('/welcome', (route) => false);
+                Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
               },
               child: const Text('Yes'),
             ),
@@ -388,17 +399,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildGoalDescription() {
     // Maps goals to their descriptions
     Map<String, String> goalDescriptions = {
-      'Maintain':
-          'Focus on maintaining current weight while improving overall fitness and health.',
-      'Gain Muscles':
-          'Prioritize gaining weight and muscle mass through proper nutrition and training.',
-      'Lose Weight':
-          'Focus on reducing body weight through balanced diet and regular exercise.',
+      'Maintain': 'Focus on maintaining current weight while improving overall fitness and health.',
+      'Gain Muscles': 'Prioritize gaining weight and muscle mass through proper nutrition and training.',
+      'Lose Weight': 'Focus on reducing body weight through balanced diet and regular exercise.',
     };
 
     // Get description for current goal
-    String description = goalDescriptions[goal] ??
-        'Customize your fitness journey based on your personal goals.';
+    String description = goalDescriptions[goal] ?? 'Customize your fitness journey based on your personal goals.';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -440,52 +447,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Profile header widget
+  // Function to handle profile image selection and local storage
+  Future<void> _changeProfileImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800, // Limit image width
+      maxHeight: 800, // Limit image height
+      imageQuality: 70, // Compress image quality to 70%
+    );
+    if (image != null) {
+      setState(() {
+        isLoading = true;
+      });
+
+      try {
+        final bytes = await image.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        
+        // Save image to local storage only
+        await LocalStorageService.saveProfileImage(base64Image);
+        
+        // Update state with base64 image
+        setState(() {
+          profileImageUrl = base64Image;
+        });
+
+        // Create notification for profile image update
+        _notificationService.createActivityNotification(
+          'Profile',
+          'updated profile picture',
+        );
+
+        // Update profile in Firestore without the image
+        await _saveProfile();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error updating profile image')),
+          );
+        }
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
   Widget _buildProfileHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundImage: AssetImage('assets/profile_image.png'),
-            radius: 40,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            // ✅ Minimal change: wrap Column with Expanded to avoid overflow
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          GestureDetector(
+            onTap: _changeProfileImage,
+            child: Stack(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      // ✅ Also wrap Text with Expanded inside Row
-                      child: Text(
-                        name.isNotEmpty
-                            ? name
-                            : 'Loading...', // Display the name fetched from Firestore
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis, // Prevent overflow
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: _showEditProfileDialog, // Show edit dialog
-                    ),
-                  ],
+                CircleAvatar(
+                  backgroundImage: profileImageUrl.isNotEmpty
+                      ? MemoryImage(base64Decode(profileImageUrl))
+                      : const AssetImage('assets/profile_image.png') as ImageProvider,
+                  radius: 40,
                 ),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    color: Color.fromARGB(255, 105, 105, 105),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
-                  overflow:
-                      TextOverflow.ellipsis, // ✅ Prevent description overflow
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    name.isNotEmpty ? name : 'Loading...', // Display the name fetched from Firestore
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: _showEditProfileDialog, // Show edit dialog
+                  ),
+                ],
+              ),
+              Text(
+                description,
+                style: const TextStyle(
+                  color: Color.fromARGB(255, 105, 105, 105),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -503,22 +571,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         children: [
-          _buildStatCard('Weight', '$weight kg', Colors.grey.shade200,
-              Colors.black, 'weight', Icons.accessibility),
-          _buildStatCard('Height', '$height cm', Colors.black, Colors.white,
-              'height', Icons.height),
-          _buildStatCard('BMI', bmi, Colors.blue, Colors.white, 'bmi',
-              Icons.monitor_weight),
-          _buildStatCard('Goal', goal, Colors.blue.shade100, Colors.black,
-              'goal', Icons.flag),
+          _buildStatCard('Weight', '$weight kg', Colors.grey.shade200, Colors.black, 'weight', Icons.accessibility),
+          _buildStatCard('Height', '$height cm', Colors.black, Colors.white, 'height', Icons.height),
+          _buildStatCard('BMI', bmi, Colors.blue, Colors.white, 'bmi', Icons.monitor_weight),
+          _buildStatCard('Goal', goal, Colors.blue.shade100, Colors.black, 'goal', Icons.flag),
         ],
       ),
     );
   }
 
   // Stat card widget with an editable option
-  Widget _buildStatCard(String title, String value, Color bgColor,
-      Color textColor, String type, IconData icon) {
+  Widget _buildStatCard(String title, String value, Color bgColor, Color textColor, String type, IconData icon) {
     return GestureDetector(
       onTap: () {
         if (type == 'goal') {
@@ -542,9 +605,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    color: textColor == Colors.white
-                        ? Colors.white70
-                        : Colors.grey,
+                    color: textColor == Colors.white ? Colors.white70 : Colors.grey,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),

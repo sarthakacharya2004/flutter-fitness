@@ -4,21 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StreakService {
-  // Instance of FirebaseFirestore for database interaction
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  // Instance of FirebaseAuth for user authentication
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  // Constant value for incrementing the streak
   final int _streakIncrementValue = 10;
-  // Constant value representing the streak goal
   final int _streakGoal = 20;
 
-  // Getter for the current user's ID
   String? get _userId => _auth.currentUser?.uid;
-  // Getter to check if a user is logged in
   bool get isUserLoggedIn => _userId != null;
 
-  // Getter for the document reference for the user's streak data in Firestore
   DocumentReference? get _streakRef {
     if (_userId != null) {
       return _firestore.collection('user_streaks').doc(_userId);
@@ -26,19 +19,14 @@ class StreakService {
     return null;
   }
 
-  // Function to get the current streak
   Future<int> getCurrentStreak() async {
     try {
-      // Check if the user is logged in
       if (isUserLoggedIn) {
-        // Get the document snapshot from Firestore
         final docSnapshot = await _streakRef!.get();
-        // If the document exists, return the current streak
         if (docSnapshot.exists) {
           final data = docSnapshot.data() as Map<String, dynamic>;
           return data['current_streak'] ?? 0;
         } else {
-          // If the document does not exist, initialize the streak data in Firestore
           await _streakRef!.set({
             'current_streak': 0,
             'daily_streak': 0,
@@ -50,74 +38,58 @@ class StreakService {
           return 0;
         }
       }
-      // If the user is not logged in, get the streak from shared preferences
       final prefs = await SharedPreferences.getInstance();
       return prefs.getInt('workout_streak') ?? 0;
     } catch (e) {
-      // Handle errors
       debugPrint('Error getting streak: $e');
       return 0;
     }
   }
 
-  // Function to get the last workout date
   Future<DateTime?> getLastWorkoutDate() async {
     try {
-      // Check if the user is logged in
       if (isUserLoggedIn) {
-        // Get the document snapshot from Firestore
         final docSnapshot = await _streakRef!.get();
-        // If the document exists, return the last workout date
         if (docSnapshot.exists) {
           final data = docSnapshot.data() as Map<String, dynamic>;
           final timestamp = data['last_workout_date'] as Timestamp?;
           return timestamp?.toDate();
         }
       }
-      // If the user is not logged in, get the last workout date from shared preferences
       final prefs = await SharedPreferences.getInstance();
       final dateString = prefs.getString('last_workout_date');
       return dateString != null ? DateTime.parse(dateString) : null;
     } catch (e) {
-      // Handle errors
       debugPrint('Error getting last workout date: $e');
       return null;
     }
   }
 
-  // Function to get the daily workout count
   Future<int> getDailyWorkouts() async {
     try {
-      // Get the daily workout count from shared preferences
       final prefs = await SharedPreferences.getInstance();
       return prefs.getInt('daily_workouts') ?? 0;
     } catch (e) {
-      // Handle errors
       debugPrint('Error getting daily workouts: $e');
       return 0;
     }
   }
 
-  // Function to update the streak
   Future<void> updateStreak({required int incrementBy}) async {
     try {
-      // Get the current date
       DateTime now = DateTime.now();
       String today = "${now.year}-${now.month}-${now.day}";
 
-      // Get the current streak and last workout date
       int currentStreak = await getCurrentStreak();
       DateTime? lastWorkoutDate = await getLastWorkoutDate();
       final prefs = await SharedPreferences.getInstance();
 
-      // Check if the workout was today and if it was a consecutive day
       bool isWorkoutToday = false;
       bool isConsecutiveDay = false;
 
       if (lastWorkoutDate != null) {
         int daysDifference = now.difference(lastWorkoutDate).inDays;
-        String lastWorkoutDateString =
-            "${lastWorkoutDate.year}-${lastWorkoutDate.month}-${lastWorkoutDate.day}";
+        String lastWorkoutDateString = "${lastWorkoutDate.year}-${lastWorkoutDate.month}-${lastWorkoutDate.day}";
         isWorkoutToday = (lastWorkoutDateString == today);
         isConsecutiveDay = (daysDifference == 1);
       }
@@ -133,7 +105,6 @@ class StreakService {
           totalStreak = incrementBy;
         }
       } else {
-        final prefs = await SharedPreferences.getInstance();
         totalStreak = (prefs.getInt('total_streak') ?? 0) + incrementBy;
       }
 
@@ -142,15 +113,15 @@ class StreakService {
         // Get daily workout count for today
         int dailyWorkouts = prefs.getInt('daily_workouts') ?? 0;
         dailyWorkouts += 1;
-
+        
         // Only increment current streak for the first two workouts per day
         if (dailyWorkouts <= 2) {
           currentStreak += _streakIncrementValue;
-
+          
           // Cap current streak at maximum value
           currentStreak = currentStreak.clamp(0, _streakGoal);
         }
-
+        
         await prefs.setInt('daily_workouts', dailyWorkouts);
       } else {
         // It's a new day
@@ -161,10 +132,10 @@ class StreakService {
           // Start a new streak
           currentStreak = _streakIncrementValue;
         }
-
+        
         // Cap current streak at maximum value
         currentStreak = currentStreak.clamp(0, _streakGoal);
-
+        
         // Reset daily workouts counter for the new day
         await prefs.setInt('daily_workouts', 1);
       }
@@ -186,17 +157,15 @@ class StreakService {
         }, SetOptions(merge: true));
       }
     } catch (e) {
-      // Handle errors
       debugPrint('Error updating streak: $e');
     }
   }
 
-  // Function to get streak information
   Future<Map<String, dynamic>> getStreakInfo() async {
     int currentStreak = await getCurrentStreak();
     final prefs = await SharedPreferences.getInstance();
     int dailyStreak = prefs.getInt('daily_streak') ?? 0;
-
+    
     // Calculate total streak as current streak plus completed goals
     int totalStreak = currentStreak;
     if (isUserLoggedIn) {
@@ -211,7 +180,7 @@ class StreakService {
         debugPrint('Error getting total streak: $e');
       }
     }
-
+    
     return {
       'current_streak': currentStreak,
       'daily_streak': dailyStreak,
@@ -225,10 +194,8 @@ class StreakService {
     };
   }
 
-  // Function to reset the streak
   Future<void> resetStreak() async {
     try {
-      // If user is logged in, reset streak data in firestore
       if (isUserLoggedIn) {
         await _streakRef!.set({
           'current_streak': 0,
@@ -238,7 +205,6 @@ class StreakService {
           'updated_at': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
-      // Reset streak data in shared preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('workout_streak', 0);
       await prefs.setInt('daily_streak', 0);
@@ -246,7 +212,6 @@ class StreakService {
       await prefs.setBool('reached_milestone', false);
       await prefs.setInt('daily_workouts', 0);
     } catch (e) {
-      // Handle errors
       debugPrint('Error resetting streak: $e');
     }
   }

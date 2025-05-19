@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class GoalService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Nutrition plans based on goals 
+  // Nutrition plans based on goals
   final Map<String, List<Map<String, dynamic>>> _goalNutrition = {
     'Lose Weight': [
       {
@@ -68,6 +68,7 @@ class GoalService {
     ],
   };
 
+
   // Get nutrition plans for specific goal
   List<Map<String, dynamic>> getNutritionByGoal(String goal) {
     return _goalNutrition[goal] ?? [];
@@ -82,7 +83,7 @@ class GoalService {
 
   // Get user's current goal
   Future<String> getUserGoal(String userId) async {
-    DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
-    return userDoc.get('goal') as String;
+    DocumentSnapshot doc = await _firestore.collection('users').doc(userId).get();
+    return doc.get('goal') as String;
   }
 }

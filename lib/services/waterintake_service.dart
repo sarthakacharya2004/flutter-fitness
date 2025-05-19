@@ -18,15 +18,14 @@ class WaterIntakeService {
     final previousIntake = await getTodayWaterIntake();
     
     await _firestore
-    .collection('users')
-    .doc(_userId)
-    .collection('waterIntake')
-    .doc(dateKey)
-    .set({
-  'intake': intakeInLiters,
-  'timestamp': FieldValue.serverTimestamp(),
-});
-
+        .collection('users')
+        .doc(_userId)
+        .collection('waterIntake')
+        .doc(dateKey)
+        .set({
+      'intake': intakeInLiters,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
 
     // Create notification for water intake update
     final difference = intakeInLiters - previousIntake;
@@ -38,25 +37,24 @@ class WaterIntakeService {
     }
   }
 
-  /// Get today's water intake
-Future<double> getTodayWaterIntake() async {
-  final today = DateTime.now();
-  final dateKey = '${today.year}-${today.month}-${today.day}';
+  /// Get today’s water intake
+  Future<double> getTodayWaterIntake() async {
+    final today = DateTime.now();
+    final dateKey = '${today.year}-${today.month}-${today.day}';
 
-  final doc = await _firestore
-      .collection('users')
-      .doc(_userId)
-      .collection('waterIntake')
-      .doc(dateKey)
-      .get();
+    final doc = await _firestore
+        .collection('users')
+        .doc(_userId)
+        .collection('waterIntake')
+        .doc(dateKey)
+        .get();
 
-  if (doc.exists && doc.data() != null) {
-    return (doc.data()!['intake'] as num).toDouble();
-  } else {
-    return 0.0;
+    if (doc.exists && doc.data() != null) {
+      return (doc.data()!['intake'] as num).toDouble();
+    } else {
+      return 0.0;
+    }
   }
-}
-
 
   /// Get last 7 days of water intake (including today)
   Future<List<double>> getLast7DaysIntake(double dailyGoal) async {
