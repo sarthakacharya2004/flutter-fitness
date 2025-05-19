@@ -74,7 +74,6 @@ class WorkoutHistoryService {
       throw Exception('Failed to get recent workouts: $e');
     }
   }
-
   // Get total workout count
   Future<int> getTotalWorkoutsCompleted() async {
   final user = _auth.currentUser;
