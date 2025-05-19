@@ -318,10 +318,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            // Removed unnecessary Row wrapper
-            icon: const Icon(Icons.logout),
-            onPressed: _logoutUser,
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: _logoutUser,
+              ),
+            ],
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -338,6 +341,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Show confirmation dialog
     showDialog(
       context: context,
+      barrierDismissible:
+          false, // Prevent dialog from closing by tapping outside
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Logout'),
