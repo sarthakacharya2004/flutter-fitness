@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fitness_hub/services/firestore_service.dart';
 
+// This screen displays details of a meal and allows editing or deleting the meal.
 class MealDetailScreen extends StatefulWidget {
   final String mealId;
   final String title;
@@ -27,7 +28,11 @@ class MealDetailScreen extends StatefulWidget {
 
 class _MealDetailScreenState extends State<MealDetailScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+
+  // State to check if we're in editing mode
   bool _isEditing = false;
+
+  // Text controllers to manage form input
   late TextEditingController _titleController;
   late TextEditingController _caloriesController;
   late TextEditingController _timeController;
@@ -37,6 +42,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize controllers with initial values from the meal
     _titleController = TextEditingController(text: widget.title);
     _caloriesController = TextEditingController(text: widget.calories);
     _timeController = TextEditingController(text: widget.time);
@@ -46,6 +53,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   @override
   void dispose() {
+    // Dispose controllers to free up resources
     _titleController.dispose();
     _caloriesController.dispose();
     _timeController.dispose();
@@ -60,15 +68,18 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
+          // Toggle between edit and save buttons
           IconButton(
             icon: Icon(_isEditing ? Icons.save : Icons.edit),
             onPressed: _isEditing ? _saveChanges : _toggleEditing,
           ),
+          // Show cancel button if editing
           if (_isEditing)
             IconButton(
               icon: const Icon(Icons.cancel),
               onPressed: _toggleEditing,
             ),
+          // Show delete button if not editing
           if (!_isEditing)
             IconButton(
               icon: const Icon(Icons.delete),
@@ -81,6 +92,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Meal image
             Container(
               height: 200,
               decoration: BoxDecoration(
@@ -92,6 +104,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
+            // Title - editable or not depending on _isEditing
             _isEditing
                 ? TextFormField(
                     controller: _titleController,
@@ -105,6 +119,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     ),
                   ),
             const SizedBox(height: 16),
+
+            // Meal info chips (Calories, Time, Protein)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -138,6 +154,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               ],
             ),
             const SizedBox(height: 24),
+
+            // Recipe section
             const Text(
               'Recipe',
               style: TextStyle(
@@ -165,6 +183,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
+  // Helper to build a chip with an icon and label
   Widget _buildInfoChip({required IconData icon, required Widget label}) {
     return Chip(
       avatar: Icon(icon, size: 18),
@@ -172,12 +191,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
+  // Toggle between edit and view modes
   void _toggleEditing() {
     setState(() {
       _isEditing = !_isEditing;
     });
   }
 
+  // Save edited values to Firestore
   Future<void> _saveChanges() async {
     try {
       await _firestoreService.updateMeal(widget.mealId, {
@@ -187,8 +208,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         'protein': _proteinController.text,
         'recipe': _recipeController.text,
       });
-      
-      _toggleEditing();
+
+      _toggleEditing(); // Exit editing mode
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Meal updated successfully')),
       );
@@ -199,6 +221,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     }
   }
 
+  // Delete the meal after confirmation dialog
   Future<void> _deleteMeal() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -218,10 +241,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       ),
     );
 
+    // If user confirmed deletion
     if (confirmed == true) {
       try {
         await _firestoreService.deleteMeal(widget.mealId);
-        Navigator.pop(context, true); // Return true to indicate deletion
+        Navigator.pop(context, true); // Go back and return true
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to delete meal: $e')),
