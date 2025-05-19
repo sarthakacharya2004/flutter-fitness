@@ -59,27 +59,28 @@ Future<double> getTodayWaterIntake() async {
 
 
   /// Get last 7 days of water intake (including today)
-Future<List<double>> getLast7DaysIntake(double dailyGoal) async {
-  final now = DateTime.now();
-  List<double> history = [];
+  Future<List<double>> getLast7DaysIntake(double dailyGoal) async {
+    final now = DateTime.now();
+    List<double> history = [];
 
-  for (int i = 6; i >= 0; i--) {
-    final day = now.subtract(Duration(days: i));
-    final key = '${day.year}-${day.month}-${day.day}';
+    for (int i = 6; i >= 0; i--) {
+      final day = now.subtract(Duration(days: i));
+      final key = '${day.year}-${day.month}-${day.day}';
 
-    final doc = await _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection('waterIntake')
-        .doc(key)
-        .get();
+      final doc = await _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('waterIntake')
+          .doc(key)
+          .get();
 
-    if (doc.exists && doc.data() != null) {
-      history.add((doc.data()!['intake'] as num).toDouble());
-    } else {
-      history.add(0.0); // No data = 0 intake
+      if (doc.exists && doc.data() != null) {
+        history.add((doc.data()!['intake'] as num).toDouble());
+      } else {
+        history.add(0.0); // No data = 0 intake
+      }
     }
-  }
 
-  return history;
+    return history;
+  }
 }
