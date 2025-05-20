@@ -212,31 +212,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               ListTile(
                 title: Text('Maintain'),
-                onTap: () {
+                onTap: () async {
+                  final oldGoal = goal;
                   setState(() {
                     goal = 'Maintain';
                   });
-                  _saveProfile();
+                  await _saveProfile();
+                  // Create notification for goal change
+                  await _notificationService.createNotification(
+                    'Profile',
+                    customTitle: 'Goal Updated',
+                    customMessage: 'Your fitness goal has been changed from $oldGoal to Maintain',
+                  );
                   Navigator.pop(context);
                 },
               ),
               ListTile(
                 title: Text('Gain Muscles'),
-                onTap: () {
+                onTap: () async {
+                  final oldGoal = goal;
                   setState(() {
                     goal = 'Gain Muscles';
                   });
-                  _saveProfile();
+                  await _saveProfile();
+                  // Create notification for goal change
+                  await _notificationService.createNotification(
+                    'Profile',
+                    customTitle: 'Goal Updated',
+                    customMessage: 'Your fitness goal has been changed from $oldGoal to Gain Muscles',
+                  );
                   Navigator.pop(context);
                 },
               ),
               ListTile(
                 title: Text('Lose Weight'),
-                onTap: () {
+                onTap: () async {
+                  final oldGoal = goal;
                   setState(() {
                     goal = 'Lose Weight';
                   });
-                  _saveProfile();
+                  await _saveProfile();
+                  // Create notification for goal change
+                  await _notificationService.createNotification(
+                    'Profile',
+                    customTitle: 'Goal Updated',
+                    customMessage: 'Your fitness goal has been changed from $oldGoal to Lose Weight',
+                  );
                   Navigator.pop(context);
                 },
               ),
@@ -323,6 +344,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Top bar widget (Logout and Settings Icon)
   Widget _buildTopBar(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final isGoogleUser = user?.providerData.any((info) => info.providerId == 'google.com') ?? false;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       child: Row(
@@ -336,11 +360,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              _navigateToScreen(context, const SettingsPage());
-            },
+          Row(
+            children: [
+              if (!isGoogleUser) // Only show lock icon for non-Google users
+                IconButton(
+                  icon: const Icon(Icons.lock),
+                  onPressed: _showChangePasswordDialog,
+                ),
+              IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () {
+                  _navigateToScreen(context, const SettingsPage());
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -374,6 +407,160 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Text('Yes'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showChangePasswordDialog() {
+    final TextEditingController oldPasswordController = TextEditingController();
+    final TextEditingController newPasswordController = TextEditingController();
+    final TextEditingController confirmPasswordController = TextEditingController();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Change Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: oldPasswordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Current Password',
+                      border: OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: newPasswordController,
+                    decoration: const InputDecoration(
+                      labelText: 'New Password',
+                      border: OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: confirmPasswordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm New Password',
+                      border: OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isLoading ? null : () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading ? null : () async {
+                    // Validate inputs
+                    if (oldPasswordController.text.isEmpty ||
+                        newPasswordController.text.isEmpty ||
+                        confirmPasswordController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please fill in all fields')),
+                      );
+                      return;
+                    }
+
+                    if (newPasswordController.text != confirmPasswordController.text) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('New passwords do not match')),
+                      );
+                      return;
+                    }
+
+                    if (newPasswordController.text.length < 6) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Password must be at least 6 characters')),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      isLoading = true;
+                    });
+
+                    try {
+                      // Get current user
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user == null) {
+                        throw Exception('No user logged in');
+                      }
+
+                      // Get credentials for reauthentication
+                      final credential = EmailAuthProvider.credential(
+                        email: user.email!,
+                        password: oldPasswordController.text,
+                      );
+
+                      // Reauthenticate user
+                      await user.reauthenticateWithCredential(credential);
+
+                      // Change password
+                      await user.updatePassword(newPasswordController.text);
+
+                      // Create notification for password change
+                      _notificationService.createActivityNotification(
+                        'Profile',
+                        'changed password',
+                      );
+
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Password changed successfully')),
+                        );
+                      }
+                    } on FirebaseAuthException catch (e) {
+                      String message = 'Failed to change password';
+                      if (e.code == 'wrong-password') {
+                        message = 'Current password is incorrect';
+                      } else if (e.code == 'weak-password') {
+                        message = 'New password is too weak';
+                      }
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(message)),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: ${e.toString()}')),
+                        );
+                      }
+                    } finally {
+                      if (context.mounted) {
+                        setState(() {
+                          isLoading = false;
+                        });
+                      }
+                    }
+                  },
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Change Password'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -641,7 +828,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildNavBarItem(Icons.home, false, () {
             _navigateToScreen(context, const HomeScreen());
           }),
-          _buildNavBarItem(Icons.list, false, () {
+          _buildNavBarItem(Icons.restaurant_menu, false, () {
             _navigateToScreen(context, const NutritionScreen());
           }),
           _buildNavBarItem(Icons.fitness_center, false, () {
@@ -669,5 +856,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _updateProfileField(String field, String value) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({field: value});
+
+      // Create notification for profile update
+      await _notificationService.createNotification(
+        'Profile',
+        customTitle: 'Profile Updated',
+        customMessage: 'Your $field has been updated to $value',
+      );
+
+      setState(() {
+        switch (field) {
+          case 'weight':
+            weight = value;
+            break;
+          case 'height':
+            height = value;
+            break;
+          case 'goal':
+            goal = value;
+            break;
+          case 'name':
+            name = value;
+            break;
+          case 'description':
+            description = value;
+            break;
+        }
+      });
+    } catch (e) {
+      print('Error updating profile: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update profile')),
+      );
+    }
+  }
+
+  Future<void> _updateProfileImage(XFile image) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final bytes = await image.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      
+      // Save image to local storage only
+      await LocalStorageService.saveProfileImage(base64Image);
+      
+      // Update state with base64 image
+      setState(() {
+        profileImageUrl = base64Image;
+      });
+
+      // Create notification for profile image update
+      await _notificationService.createNotification(
+        'Profile',
+        customTitle: 'Profile Picture Updated',
+        customMessage: 'Your profile picture has been updated successfully',
+      );
+
+      // Update profile in Firestore without the image
+      await _saveProfile();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating profile image')),
+        );
+      }
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 }

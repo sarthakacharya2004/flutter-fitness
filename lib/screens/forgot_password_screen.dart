@@ -119,7 +119,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
                               'SEND RESET LINK',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                   ),

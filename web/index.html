@@ -31,6 +31,27 @@
 
   <title>fitness_hub</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Firebase Configuration -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx",
+      authDomain: "your-app.firebaseapp.com",
+      projectId: "your-app",
+      storageBucket: "your-app.appspot.com",
+      messagingSenderId: "your-sender-id",
+      appId: "your-app-id"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

@@ -4,6 +4,7 @@ import 'dart:async';
 import '../services/workout_history_service.dart';
 import '../services/streak_service.dart';
 import 'workout_screen.dart';
+import '../services/notification_service.dart';
 
 class WorkoutDetailScreen extends StatefulWidget {
   final Map<String, dynamic> workout;
@@ -70,19 +71,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Push-ups',
           'duration': 45,
-          'image': 'https://images.unsplash.com/photo-1598971639058-a152c5ab2327?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 10-12 reps',
         },
         {
           'name': 'Dumbbell Rows',
           'duration': 60,
-          'image': 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 12 reps each arm',
         },
         {
           'name': 'Shoulder Press',
           'duration': 60,
-          'image': 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 10 reps',
         },
       ]);
@@ -91,19 +92,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Squats',
           'duration': 60,
-          'image': 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 15 reps',
         },
         {
           'name': 'Lunges',
           'duration': 60,
-          'image': 'https://images.unsplash.com/photo-1517637382994-f02da38c6728?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 10 reps each leg',
         },
         {
           'name': 'Glute Bridges',
           'duration': 45,
-          'image': 'https://images.unsplash.com/photo-1571945153237-4929e783af4a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 12 reps',
         },
       ]);
@@ -112,19 +113,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Planks',
           'duration': 45,
-          'image': 'https://images.unsplash.com/photo-1566241477600-ac026ad43874?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 30 seconds',
         },
         {
           'name': 'Russian Twists',
           'duration': 45,
-          'image': 'https://images.unsplash.com/photo-1544033527-b192daee1f5b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 15 reps each side',
         },
         {
           'name': 'Leg Raises',
           'duration': 45,
-          'image': 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 12 reps',
         },
       ]);
@@ -159,22 +160,22 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       // Default exercises if type doesn't match specific categories
       _exercises.addAll([
         {
-          'name': 'Jumping Jacks',
-          'duration': 45,
-          'image': 'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
-          'instructions': '30 seconds full intensity',
-        },
-        {
           'name': 'Push-ups',
           'duration': 45,
-          'image': 'https://images.unsplash.com/photo-1598971639058-a152c5ab2327?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 10-12 reps',
         },
         {
           'name': 'Squats',
           'duration': 60,
-          'image': 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
           'instructions': '3 sets of 15 reps',
+        },
+        {
+          'name': 'Planks',
+          'duration': 45,
+          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'instructions': '3 sets of 30 seconds',
         },
       ]);
     }
@@ -256,50 +257,58 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   }
   
   void _completeWorkout() async {
-  // Stop any running timer
-  _timer?.cancel();
+    // Stop any running timer
+    _timer?.cancel();
 
-  // Set workout as complete
-  setState(() {
-    _isWorkoutComplete = true;
-    _totalProgress = 1.0; // 100% complete
-  });
-
-  try {
-    // Save workout to history
-    final workoutHistoryService = WorkoutHistoryService();
-    await workoutHistoryService.saveWorkoutHistory(
-      workoutName: widget.workout['title'],
-      duration: _elapsedWorkoutSeconds,
-      exercisesCompleted: _exercises.length,
-      caloriesBurned: widget.workout['calories'],
-      workoutType: widget.workout['title'].toLowerCase().contains('cardio')
-          ? 'cardio'
-          : widget.workout['title'].toLowerCase().contains('strength')
-              ? 'strength'
-              : widget.workout['title'].toLowerCase().contains('yoga')
-                  ? 'yoga'
-                  : 'general',
-    );
-
-    // Update streak
-    await _streakService.updateStreak(incrementBy: 10);
-    await _loadStreakData(); // Refresh UI with updated streak info
-    print('Streak updated and loaded again');
-
-    // Check milestone
-    final streakInfo = await _streakService.getStreakInfo();
+    // Set workout as complete
     setState(() {
-      _currentStreak = streakInfo['current_streak'];
-      _reachedMilestone = streakInfo['current_streak'] % _streakGoal == 0;
+      _isWorkoutComplete = true;
+      _totalProgress = 1.0; // 100% complete
     });
-  } catch (e) {
-    debugPrint('Error completing workout: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to save workout progress')),
-    );
+
+    try {
+      // Save workout to history
+      final workoutHistoryService = WorkoutHistoryService();
+      await workoutHistoryService.saveWorkoutHistory(
+        workoutName: widget.workout['title'],
+        duration: _elapsedWorkoutSeconds,
+        exercisesCompleted: _exercises.length,
+        caloriesBurned: widget.workout['calories'],
+        workoutType: widget.workout['title'].toLowerCase().contains('cardio')
+            ? 'cardio'
+            : widget.workout['title'].toLowerCase().contains('strength')
+                ? 'strength'
+                : widget.workout['title'].toLowerCase().contains('yoga')
+                    ? 'yoga'
+                    : 'general',
+      );
+
+      // Create workout completion notification
+      final notificationService = NotificationService();
+      await notificationService.createNotification(
+        'Workout',
+        customTitle: 'Workout Completed! 🎉',
+        customMessage: 'Great job completing the ${widget.workout['title']} workout! You burned ${widget.workout['calories']} calories.',
+      );
+
+      // Update streak
+      await _streakService.updateStreak(incrementBy: 10);
+      await _loadStreakData(); // Refresh UI with updated streak info
+      print('Streak updated and loaded again');
+
+      // Check milestone
+      final streakInfo = await _streakService.getStreakInfo();
+      setState(() {
+        _currentStreak = streakInfo['current_streak'];
+        _reachedMilestone = streakInfo['current_streak'] % _streakGoal == 0;
+      });
+    } catch (e) {
+      debugPrint('Error completing workout: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save workout progress')),
+      );
+    }
   }
-}
   
   @override
   void dispose() {

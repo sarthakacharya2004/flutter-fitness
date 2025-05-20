@@ -69,6 +69,30 @@ class _AddMealScreenState extends State<AddMealScreen> {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
+        // Show notification
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'New Meal Added! 🎉',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_titleController.text} - ${_caloriesController.text}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green,
+          ),
+        );
+
         Navigator.pop(context, true);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -85,29 +109,39 @@ class _AddMealScreenState extends State<AddMealScreen> {
       setState(() {
         _imageUrl = pickedFile.path;
       });
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('imageUrl', _imageUrl);
     }
   }
 
   Widget _buildImagePicker() {
     return GestureDetector(
-      onTap: () async {
-        final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-        if (pickedFile != null) {
-          setState(() {
-            _imageUrl = pickedFile.path;
-          });
-          _saveImageUrl(pickedFile.path);
-        }
-      },
-      child: _imageUrl.isEmpty
-          ? const Icon(Icons.photo_camera, size: 50)
-          : Image.file(
-              File(_imageUrl),
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.error_outline, size: 50),
-            ),
+      onTap: _selectImage,
+      child: Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_a_photo,
+                size: 50,
+                color: Colors.grey[600],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add Photo',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -131,21 +165,30 @@ class _AddMealScreenState extends State<AddMealScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Meal Image Placeholder
-              GestureDetector(
-                onTap: _selectImage,
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    image: DecorationImage(
-                      image: _imageUrl.isNotEmpty
-                          ? FileImage(File(_imageUrl))
-                          : AssetImage('assets/placeholder.png') as ImageProvider,
-                      fit: BoxFit.cover,
+              _imageUrl.isEmpty
+                  ? _buildImagePicker()
+                  : Stack(
+                      children: [
+                        Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            image: DecorationImage(
+                              image: FileImage(File(_imageUrl)),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.white),
+                            onPressed: _selectImage,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ),
               const SizedBox(height: 20),
 
               // Meal Title

@@ -165,7 +165,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
       'recipe': '1. Steam cauliflower florets\n2. Prepare cheese sauce\n3. Combine and bake\n4. Top with herbs'
     },
     {
-      'id': 'veg_k2',
       'title': 'Avocado Caprese Salad',
       'calories': '420 kcal',
       'time': '10 min',
@@ -222,7 +221,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
           'calories': '280 kcal',
           'time': '25 min',
           'protein': '8g',
-          'image': 'https://images.unsplash.com/photo-1596573405462-c7b5e6b0b547?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+          'image': 'https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
           'recipe': '1. Bake sweet potato\n2. Top with cinnamon\n3. Add nuts and honey',
           'category': 'Carbs'
         },
@@ -363,7 +362,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
           'calories': '320 kcal',
           'time': '35 min',
           'protein': '18g',
-          'image': 'https://images.unsplash.com/photo-1662487801217-1e7f4576c1b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+          'image': 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
           'recipe': '1. Slice and salt eggplant\n2. Coat with almond flour\n3. Layer with cheese\n4. Bake until golden',
           'category': 'Keto'
         }
@@ -625,174 +624,175 @@ class _NutritionScreenState extends State<NutritionScreen> {
       ),
     );
   }
-Widget _buildMealCard({required Map<String, dynamic> meal}) {
-  final String? imagePath = meal['image'];
-  final bool hasValidImage = imagePath != null && imagePath.isNotEmpty;
-  
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MealDetailScreen(
-            mealId: meal['id'] ?? '',
-            title: meal['title'] ?? 'No title',
-            calories: meal['calories'] ?? '0 kcal',
-            time: meal['time'] ?? '0 minutes',
-            protein: meal['protein'] ?? '0g protein',
-            image: meal['image'] ?? '',
-            recipe: meal['recipe'] ?? 'No recipe provided',
+
+  Widget _buildMealCard({required Map<String, dynamic> meal}) {
+    final String? imagePath = meal['image'] ?? meal['imageUrl'];
+    final bool hasValidImage = imagePath != null && imagePath.isNotEmpty;
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MealDetailScreen(
+              mealId: meal['id'] ?? '',
+              title: meal['title'] ?? 'No title',
+              calories: meal['calories'] ?? '0 kcal',
+              time: meal['time'] ?? '0 minutes',
+              protein: meal['protein'] ?? '0g protein',
+              image: meal['imageUrl'] ?? meal['image'] ?? '',
+              recipe: meal['recipe'] ?? 'No recipe provided',
+            ),
           ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-      );
-    },
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image container
-          Expanded(
-            flex: 3,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                color: Colors.grey[300], // Fallback color
-              ),
-              child: Stack(
-                children: [
-                  // Image with fallback
-                  if (hasValidImage)
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                        child: _buildMealImage(imagePath!),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image container
+            Expanded(
+              flex: 3,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  color: Colors.grey[300], // Fallback color
+                ),
+                child: Stack(
+                  children: [
+                    // Image with fallback
+                    if (hasValidImage)
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                          child: _buildMealImage(imagePath!),
+                        ),
                       ),
-                    ),
-                  
-                  // Show icon if no image
-                  if (!hasValidImage)
-                    const Positioned.fill(
-                      child: Center(
-                        child: Icon(
-                          Icons.restaurant,
-                          size: 40,
-                          color: Colors.grey,
+                    
+                    // Show icon if no image
+                    if (!hasValidImage)
+                      const Positioned.fill(
+                        child: Center(
+                          child: Icon(
+                            Icons.restaurant,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
                     ),
-                    
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.local_fire_department,
-                            color: Colors.white,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            meal['calories'] ?? '0 kcal',
-                            style: const TextStyle(
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.local_fire_department,
                               color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                              size: 14,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              meal['calories'] ?? '0 kcal',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          // Text content section remains the same
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    meal['title'] ?? 'No title',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
+            // Text content section remains the same
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      meal['title'] ?? 'No title',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildIconText(Icons.timer_outlined, meal['time'] ?? '0 min'),
-                      _buildIconText(Icons.fitness_center, meal['protein']?.split(' ')[0] ?? '0g'),
-                    ],
-                  ),
-                ],
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildIconText(Icons.timer_outlined, meal['time'] ?? '0 min'),
+                        _buildIconText(Icons.fitness_center, meal['protein']?.split(' ')[0] ?? '0g'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _buildMealImage(String path) {
-  if (path.startsWith('http')) {
-    return Image.network(
-      path,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => const Center(
-        child: Icon(Icons.error_outline, size: 30, color: Colors.grey),
-      ),
-    );
-  } else {
-    return Image.file(
-      File(path),
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => const Center(
-        child: Icon(Icons.error_outline, size: 30, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
-}
+
+  Widget _buildMealImage(String path) {
+    if (path.startsWith('http')) {
+      return Image.network(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Icon(Icons.error_outline, size: 30, color: Colors.grey),
+        ),
+      );
+    } else {
+      return Image.file(
+        File(path),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Icon(Icons.error_outline, size: 30, color: Colors.grey),
+        ),
+      );
+    }
+  }
 
   Widget _buildIconText(IconData icon, String text) {
     return Row(
@@ -855,24 +855,24 @@ Widget _buildMealImage(String path) {
     );
   }
 
-Future<void> _loadNutrition() async {
-  setState(() => isLoading = true);
-  try {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userGoal = await _goalService.getUserGoal(user.uid);
-      if (userGoal == 'Gain Muscles') {
-        _meals = _gainMuscleNutrition;
-      } else if (userGoal == 'Lose Weight') {
-        _meals = _loseWeightNutrition;
-      } else {
-        _meals = _maintainNutrition;
+  Future<void> _loadNutrition() async {
+    setState(() => isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userGoal = await _goalService.getUserGoal(user.uid);
+        if (userGoal == 'Gain Muscles') {
+          _meals = _gainMuscleNutrition;
+        } else if (userGoal == 'Lose Weight') {
+          _meals = _loseWeightNutrition;
+        } else {
+          _meals = _maintainNutrition;
+        }
       }
+    } catch (e) {
+      print('Error loading nutrition: $e');
+    } finally {
+      setState(() => isLoading = false);
     }
-  } catch (e) {
-    print('Error loading nutrition: $e');
-  } finally {
-    setState(() => isLoading = false);
   }
-}
 }

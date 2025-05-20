@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fitness_hub/services/firestore_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class MealDetailScreen extends StatefulWidget {
   final String mealId;
@@ -36,7 +35,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   late TextEditingController _timeController;
   late TextEditingController _proteinController;
   late TextEditingController _recipeController;
-  String _imageUrl = '';
 
   @override
   void initState() {
@@ -46,14 +44,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     _timeController = TextEditingController(text: widget.time);
     _proteinController = TextEditingController(text: widget.protein);
     _recipeController = TextEditingController(text: widget.recipe);
-    _loadImageUrl();
-  }
-
-  Future<void> _loadImageUrl() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _imageUrl = prefs.getString('imageUrl') ?? widget.image;
-    });
   }
 
   @override
@@ -70,7 +60,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(_isEditing ? 'Edit Meal' : widget.title),
         actions: [
           IconButton(
             icon: Icon(_isEditing ? Icons.save : Icons.edit),
@@ -94,64 +84,91 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
+              width: double.infinity,
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                image: DecorationImage(
-                  image: _imageUrl.isNotEmpty
-                      ? FileImage(File(_imageUrl))
-                      : AssetImage('assets/placeholder.png') as ImageProvider,
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.grey[200],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: _buildMealImage(),
               ),
             ),
+            const SizedBox(height: 24),
+            
+            if (!_isEditing)
+              Text(
+                widget.title,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            else
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
+              ),
             const SizedBox(height: 16),
-            _isEditing
-                ? TextFormField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                  )
-                : Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-            const SizedBox(height: 16),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildInfoChip(
-                  icon: Icons.local_fire_department,
-                  label: _isEditing
-                      ? TextFormField(
-                          controller: _caloriesController,
-                          decoration: const InputDecoration(labelText: 'Calories'),
-                        )
-                      : Text(widget.calories),
+                Expanded(
+                  child: _buildInfoChip(
+                    icon: Icons.local_fire_department,
+                    label: _isEditing
+                        ? TextFormField(
+                            controller: _caloriesController,
+                            decoration: const InputDecoration(
+                              labelText: 'Calories',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                            ),
+                          )
+                        : Text(widget.calories),
+                  ),
                 ),
-                _buildInfoChip(
-                  icon: Icons.timer,
-                  label: _isEditing
-                      ? TextFormField(
-                          controller: _timeController,
-                          decoration: const InputDecoration(labelText: 'Time'),
-                        )
-                      : Text(widget.time),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildInfoChip(
+                    icon: Icons.timer,
+                    label: _isEditing
+                        ? TextFormField(
+                            controller: _timeController,
+                            decoration: const InputDecoration(
+                              labelText: 'Time',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                            ),
+                          )
+                        : Text(widget.time),
+                  ),
                 ),
-                _buildInfoChip(
-                  icon: Icons.fitness_center,
-                  label: _isEditing
-                      ? TextFormField(
-                          controller: _proteinController,
-                          decoration: const InputDecoration(labelText: 'Protein'),
-                        )
-                      : Text(widget.protein),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildInfoChip(
+                    icon: Icons.fitness_center,
+                    label: _isEditing
+                        ? TextFormField(
+                            controller: _proteinController,
+                            decoration: const InputDecoration(
+                              labelText: 'Protein',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                            ),
+                          )
+                        : Text(widget.protein),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
+
             const Text(
               'Recipe',
               style: TextStyle(
@@ -164,6 +181,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 ? TextFormField(
                     controller: _recipeController,
                     maxLines: null,
+                    minLines: 3,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       labelText: 'Recipe Instructions',
@@ -180,9 +198,28 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 
   Widget _buildInfoChip({required IconData icon, required Widget label}) {
-    return Chip(
-      avatar: Icon(icon, size: 18),
-      label: label,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.grey[700]),
+          const SizedBox(width: 4),
+          Expanded(
+            child: label is TextFormField
+                ? label
+                : Text(
+                    label is Text ? (label.data ?? '') : label.toString(),
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -243,14 +280,34 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       }
     }
   }
+
   Widget _buildMealImage() {
-    return _imageUrl.isEmpty
-        ? const Icon(Icons.error_outline, size: 50)
-        : Image.file(
-            File(_imageUrl),
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => 
-              const Icon(Icons.error_outline, size: 50),
-          );
+    if (widget.image.isEmpty) {
+      return const Center(
+        child: Icon(Icons.restaurant, size: 50, color: Colors.grey),
+      );
+    }
+
+    if (widget.image.startsWith('http')) {
+      return Image.network(
+        widget.image,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Icon(Icons.error_outline, size: 50, color: Colors.grey),
+        ),
+      );
+    } else {
+      return Image.file(
+        File(widget.image),
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Icon(Icons.error_outline, size: 50, color: Colors.grey),
+        ),
+      );
+    }
   }
 }

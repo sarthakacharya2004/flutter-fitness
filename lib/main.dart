@@ -7,10 +7,26 @@ import 'screens/profile_screen.dart';
 import 'screens/nutrition_screen.dart';
 import 'screens/workout_screen.dart';
 import 'screens/settings_screen.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Initialize Firebase
+  
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyDxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx",
+        authDomain: "your-app.firebaseapp.com",
+        projectId: "your-app",
+        storageBucket: "your-app.appspot.com",
+        messagingSenderId: "your-sender-id",
+        appId: "your-app-id"
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
+  
   runApp(const MyApp());
 }
 
@@ -23,7 +39,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'FitnessHub',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        primaryColor: Colors.blue,
+        scaffoldBackgroundColor: Colors.white,
       ),
       initialRoute: '/welcome', // Start at the welcome screen
       routes: {

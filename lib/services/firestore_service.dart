@@ -183,11 +183,38 @@ class FirestoreService {
     if (user == null) return {'start': null, 'current': null};
 
     try {
-      final logs = await getAllWeightLogs();
+      // Get user document for start weight
       final userSnapshot = await _firestore.collection('users').doc(user.uid).get();
+      final startWeight = userSnapshot.data()?['startWeight']?.toDouble();
 
-      final startWeight = userSnapshot.data()?['start_weight']?.toDouble();
-      final currentWeight = logs.isNotEmpty ? logs.last['weight']?.toDouble() : null;
+      // Get today's weight log
+      final todayDate = DateTime.now();
+      final formattedDate = '${todayDate.year}-${todayDate.month.toString().padLeft(2, '0')}-${todayDate.day.toString().padLeft(2, '0')}';
+      
+      final todayWeightDoc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('weight_logs')
+          .doc(formattedDate)
+          .get();
+
+      double? currentWeight;
+      if (todayWeightDoc.exists) {
+        currentWeight = todayWeightDoc.data()?['weight']?.toDouble();
+      } else {
+        // If no weight log for today, get the most recent weight log
+        final recentWeightLogs = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('weight_logs')
+            .orderBy('timestamp', descending: true)
+            .limit(1)
+            .get();
+
+        if (recentWeightLogs.docs.isNotEmpty) {
+          currentWeight = recentWeightLogs.docs.first.data()['weight']?.toDouble();
+        }
+      }
 
       return {
         'start': startWeight,

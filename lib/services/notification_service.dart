@@ -16,9 +16,10 @@ class NotificationService {
     if (_auth.currentUser == null) return true;
 
     final workoutDoc = await _firestore
-        .collection('workouts')
-        .where('userId', isEqualTo: _auth.currentUser!.uid)
-        .where('date', isEqualTo: DateTime.now().toString().split(' ')[0])
+        .collection('users')
+        .doc(_auth.currentUser!.uid)
+        .collection('workout_history')
+        .where('date_completed', isGreaterThan: Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 1))))
         .get();
 
     return workoutDoc.docs.isNotEmpty;
@@ -39,17 +40,52 @@ class NotificationService {
     return (data['current'] ?? 0) >= (data['goal'] ?? 2000);
   }
 
+  // Check notification preference
+  Future<bool> areNotificationsEnabled() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      
+      return doc.data()?['notificationsEnabled'] ?? true;
+    } catch (e) {
+      print('Error checking notification preference: $e');
+      return true; // Default to true if there's an error
+    }
+  }
+
   // Create activity notification
-  Future<void> createActivityNotification(String activity, String detail) async {
-    await createNotification(
-      activity,
-      customTitle: 'Activity Update',
-      customMessage: 'You $detail',
-    );
+  Future<void> createActivityNotification(String type, String action) async {
+    if (!await areNotificationsEnabled()) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': user.uid,
+        'type': type,
+        'message': 'You $action',
+        'timestamp': FieldValue.serverTimestamp(),
+        'read': false,
+        'unread': true,
+      });
+    } catch (e) {
+      print('Error creating notification: $e');
+    }
   }
 
   // Check and create scheduled notifications
   Future<void> checkScheduledNotifications() async {
+    if (!await areNotificationsEnabled()) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final now = DateTime.now();
 
     // Check workout notification (every 4 hours)
@@ -57,7 +93,7 @@ class NotificationService {
         now.difference(_lastWorkoutNotification!).inHours >= 4) {
       final workoutCompleted = await _isWorkoutCompleted();
       if (!workoutCompleted) {
-        await createNotification('Workout');
+        await createActivityNotification('Workout', 'worked out');
         _lastWorkoutNotification = now;
       }
     }
@@ -67,7 +103,7 @@ class NotificationService {
         now.difference(_lastWaterNotification!).inHours >= 4) {
       final waterGoalMet = await _isWaterGoalMet();
       if (!waterGoalMet) {
-        await createNotification('Water');
+        await createActivityNotification('Water', 'drank water');
         _lastWaterNotification = now;
       }
     }
@@ -80,7 +116,11 @@ class NotificationService {
     "Ready to turn those dreams into gains? Let's go! 🔥",
     "Missing your workout? Your body misses you too! 🏃‍♂️",
     "Feeling lazy? Remember why you started! 💭",
-    "Your workout is calling - time to answer! 📱"
+    "Your workout is calling - time to answer! 📱",
+    "Don't break your streak! Keep the momentum going! 🏆",
+    "One workout closer to your goals! 🌟",
+    "Your body can handle almost anything - it's your mind you have to convince! 💪",
+    "The only bad workout is the one that didn't happen! 🎯"
   ];
 
   // Water reminder messages

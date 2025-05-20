@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   String userName = '';
   String profileImageUrl = '';
+  Map<String, double?>? _cachedWeights;
 
   // Dummy Weight Data
   final List<FlSpot> weightData = [
@@ -54,11 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserName();
     _loadWaterData();
     _loadProfileImage();
+    _loadWeights();
 
     // Save initial weight from signup if provided
     if (widget.initialWeight != null) {
       _firestoreService.addWeightLog({'weight': widget.initialWeight});
-     }
+    }
   }
 
   Future<void> _loadUserName() async {
@@ -83,6 +85,32 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       print('Error loading profile image from local storage: $e');
+    }
+  }
+
+  Future<void> _loadWeights() async {
+    try {
+      final weights = await _firestoreService.getStartAndCurrentWeight();
+      if (mounted) {
+        setState(() {
+          _cachedWeights = weights;
+        });
+      }
+    } catch (e) {
+      print('Error loading weights: $e');
+    }
+  }
+
+  Future<void> _refreshWeights() async {
+    try {
+      final weights = await _firestoreService.getStartAndCurrentWeight();
+      if (mounted) {
+        setState(() {
+          _cachedWeights = weights;
+        });
+      }
+    } catch (e) {
+      print('Error refreshing weights: $e');
     }
   }
 
@@ -156,24 +184,68 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const NotificationScreen()),
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('notifications')
+                    .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+                    .where('unread', isEqualTo: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Icon(Icons.notifications, color: Colors.black);
+                  }
+
+                  final unreadCount = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                      );
+                    },
+                    child: Stack(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications,
+                            color: Colors.black,
+                          ),
+                        ),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                unreadCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   );
                 },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.notifications,
-                    color: Colors.black,
-                  ),
-                ),
               ),
             ],
           ),
@@ -278,48 +350,36 @@ Widget _buildWeightTracker(String userId) {
           ),
           const SizedBox(height: 20),
 
-          // Stream to get current weight and start weight
-          FutureBuilder<Map<String, double?>>(
-            future: _firestoreService.getStartAndCurrentWeight(),  // Fetch start and current weight together
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-
-              if (!snapshot.hasData) {
-                return const Text(
-                  'No weight logs available',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                );
-              }
-
-              final startWeight = snapshot.data?['start'];
-              final currentWeight = snapshot.data?['current'];
-
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildWeightInfoCard('Current', currentWeight != null ? '$currentWeight kg' : 'Not available', Colors.blue),
-                  _buildWeightInfoCard('Start', startWeight != null ? '$startWeight kg' : 'Not set', Colors.grey),
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(FirebaseAuth.instance.currentUser?.uid)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const SizedBox();
-                      final weightGoal = snapshot.data?.get('weightGoal')?.toString() ?? 'Not set';
-                      return _buildWeightInfoCard('Goal', '$weightGoal kg', Colors.green);
-                    },
-                  ),
-                ],
-              );
-            },
-          ),
+          // Use cached weights with loading state
+          if (_cachedWeights == null)
+            const Center(child: CircularProgressIndicator())
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildWeightInfoCard(
+                  'Current',
+                  _cachedWeights!['current'] != null ? '${_cachedWeights!['current']} kg' : 'Not available',
+                  Colors.blue
+                ),
+                _buildWeightInfoCard(
+                  'Start',
+                  _cachedWeights!['start'] != null ? '${_cachedWeights!['start']} kg' : 'Not set',
+                  Colors.grey
+                ),
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(FirebaseAuth.instance.currentUser?.uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const SizedBox();
+                    final weightGoal = snapshot.data?.get('weightGoal')?.toString() ?? 'Not set';
+                    return _buildWeightInfoCard('Goal', '$weightGoal kg', Colors.green);
+                  },
+                ),
+              ],
+            ),
 
           const SizedBox(height: 15),
           SizedBox(
@@ -416,12 +476,12 @@ void _showWeightUpdateDialog(BuildContext context) {
             try {
               // Save weight to Firestore as a Map<String, dynamic>
               await _firestoreService.addWeightLog({'weight': newWeight});
+              
+              // Refresh the cached weights
+              await _refreshWeights();
 
               // After saving, close the dialog
               Navigator.pop(context);
-
-              // Optionally refresh UI
-              setState(() {});
             } catch (e) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text("Error saving weight: $e")),
@@ -430,6 +490,7 @@ void _showWeightUpdateDialog(BuildContext context) {
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue[700],
+            foregroundColor: Colors.white,
           ),
           child: const Text('Save'),
         ),
@@ -910,38 +971,19 @@ Widget _buildWaterButton(String text, IconData icon, VoidCallback onPressed, Mat
 
   Widget _buildBottomNavBar(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildNavBarItem(Icons.home, true, () {}),
-          _buildNavBarItem(Icons.list, false, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NutritionScreen()),
-            );
+          _buildNavBarItem(Icons.restaurant_menu, false, () {
+            _navigateToScreen(context, const NutritionScreen());
           }),
           _buildNavBarItem(Icons.fitness_center, false, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const WorkoutScreen()),
-            );
+            _navigateToScreen(context, const WorkoutScreen());
           }),
           _buildNavBarItem(Icons.person, false, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
+            _navigateToScreen(context, const ProfileScreen());
           }),
         ],
       ),
@@ -962,6 +1004,12 @@ Widget _buildWaterButton(String text, IconData icon, VoidCallback onPressed, Mat
           color: isActive ? Colors.white : Colors.grey,
         ),
       ),
+    );
+  }
+
+  void _navigateToScreen(BuildContext context, Widget screen) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => screen),
     );
   }
 }
