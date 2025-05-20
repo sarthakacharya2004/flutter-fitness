@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fitness_hub/services/firestore_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MealDetailScreen extends StatefulWidget {
   final String mealId;
@@ -35,6 +36,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   late TextEditingController _timeController;
   late TextEditingController _proteinController;
   late TextEditingController _recipeController;
+  String _imageUrl = '';
 
   @override
   void initState() {
@@ -44,6 +46,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     _timeController = TextEditingController(text: widget.time);
     _proteinController = TextEditingController(text: widget.protein);
     _recipeController = TextEditingController(text: widget.recipe);
+    _loadImageUrl();
+  }
+
+  Future<void> _loadImageUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _imageUrl = prefs.getString('imageUrl') ?? widget.image;
+    });
   }
 
   @override
@@ -88,11 +98,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: Colors.grey[200],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: _buildMealImage(),
+                image: DecorationImage(
+                  image: _imageUrl.isNotEmpty
+                      ? FileImage(File(_imageUrl))
+                      : AssetImage('assets/placeholder.png') as ImageProvider,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -280,34 +291,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       }
     }
   }
-
   Widget _buildMealImage() {
-    if (widget.image.isEmpty) {
-      return const Center(
-        child: Icon(Icons.restaurant, size: 50, color: Colors.grey),
-      );
-    }
-
-    if (widget.image.startsWith('http')) {
-      return Image.network(
-        widget.image,
-        width: double.infinity,
-        height: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const Center(
-          child: Icon(Icons.error_outline, size: 50, color: Colors.grey),
-        ),
-      );
-    } else {
-      return Image.file(
-        File(widget.image),
-        width: double.infinity,
-        height: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const Center(
-          child: Icon(Icons.error_outline, size: 50, color: Colors.grey),
-        ),
-      );
-    }
+    return _imageUrl.isEmpty
+        ? const Icon(Icons.error_outline, size: 50)
+        : Image.file(
+            File(_imageUrl),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => 
+              const Icon(Icons.error_outline, size: 50),
+          );
   }
 }

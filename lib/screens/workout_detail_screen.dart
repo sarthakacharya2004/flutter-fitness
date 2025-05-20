@@ -71,19 +71,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Push-ups',
           'duration': 45,
-          'image': 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1598971639058-a152c5ab2327?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 10-12 reps',
         },
         {
           'name': 'Dumbbell Rows',
           'duration': 60,
-          'image': 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 12 reps each arm',
         },
         {
           'name': 'Shoulder Press',
           'duration': 60,
-          'image': 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 10 reps',
         },
       ]);
@@ -92,19 +92,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Squats',
           'duration': 60,
-          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 15 reps',
         },
         {
           'name': 'Lunges',
           'duration': 60,
-          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1517637382994-f02da38c6728?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 10 reps each leg',
         },
         {
           'name': 'Glute Bridges',
           'duration': 45,
-          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1571945153237-4929e783af4a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 12 reps',
         },
       ]);
@@ -113,19 +113,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         {
           'name': 'Planks',
           'duration': 45,
-          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1566241477600-ac026ad43874?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 30 seconds',
         },
         {
           'name': 'Russian Twists',
           'duration': 45,
-          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1544033527-b192daee1f5b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 15 reps each side',
         },
         {
           'name': 'Leg Raises',
           'duration': 45,
-          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 12 reps',
         },
       ]);
@@ -160,15 +160,21 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       // Default exercises if type doesn't match specific categories
       _exercises.addAll([
         {
+          'name': 'Jumping Jacks',
+          'duration': 45,
+          'image': 'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+          'instructions': '30 seconds full intensity',
+        },
+        {
           'name': 'Push-ups',
           'duration': 45,
-          'image': 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1598971639058-a152c5ab2327?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 10-12 reps',
         },
         {
           'name': 'Squats',
           'duration': 60,
-          'image': 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600',
+          'image': 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
           'instructions': '3 sets of 15 reps',
         },
         {

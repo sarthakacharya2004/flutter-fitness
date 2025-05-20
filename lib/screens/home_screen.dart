@@ -28,7 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   String userName = '';
   String profileImageUrl = '';
-  Map<String, double?>? _cachedWeights;
 
   // Dummy Weight Data
   final List<FlSpot> weightData = [
@@ -55,7 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserName();
     _loadWaterData();
     _loadProfileImage();
-    _loadWeights();
 
     // Save initial weight from signup if provided
     if (widget.initialWeight != null) {
@@ -85,32 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       print('Error loading profile image from local storage: $e');
-    }
-  }
-
-  Future<void> _loadWeights() async {
-    try {
-      final weights = await _firestoreService.getStartAndCurrentWeight();
-      if (mounted) {
-        setState(() {
-          _cachedWeights = weights;
-        });
-      }
-    } catch (e) {
-      print('Error loading weights: $e');
-    }
-  }
-
-  Future<void> _refreshWeights() async {
-    try {
-      final weights = await _firestoreService.getStartAndCurrentWeight();
-      if (mounted) {
-        setState(() {
-          _cachedWeights = weights;
-        });
-      }
-    } catch (e) {
-      print('Error refreshing weights: $e');
     }
   }
 
