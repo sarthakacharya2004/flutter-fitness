@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   String userName = '';
   String profileImageUrl = '';
+  Map<String, double?>? _cachedWeights;
 
   // Dummy Weight Data
   final List<FlSpot> weightData = [
@@ -55,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserName();
     _loadWaterData();
     _loadProfileImage();
+    _loadWeights();
 
     // Save initial weight from signup if provided
     if (widget.initialWeight != null) {
@@ -84,6 +86,32 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       print('Error loading profile image from local storage: $e');
+    }
+  }
+
+  Future<void> _loadWeights() async {
+    try {
+      final weights = await _firestoreService.getStartAndCurrentWeight();
+      if (mounted) {
+        setState(() {
+          _cachedWeights = weights;
+        });
+      }
+    } catch (e) {
+      print('Error loading weights: $e');
+    }
+  }
+
+  Future<void> _refreshWeights() async {
+    try {
+      final weights = await _firestoreService.getStartAndCurrentWeight();
+      if (mounted) {
+        setState(() {
+          _cachedWeights = weights;
+        });
+      }
+    } catch (e) {
+      print('Error refreshing weights: $e');
     }
   }
 
@@ -511,6 +539,7 @@ Future<void> _loadWaterData() async {
 Future<void> _updateWaterIntake(double amount) async {
   if (!mounted) return;
   try {
+    double oldIntake = waterIntake;
     double newIntake = (waterIntake + amount).clamp(0.0, waterGoal);
     await waterService.saveWaterIntake(newIntake);
     if (!mounted) return;
@@ -519,6 +548,28 @@ Future<void> _updateWaterIntake(double amount) async {
     setState(() {
       waterIntake = newIntake;
     });
+    
+    // Create notification for water intake change
+    final NotificationService _notificationService = NotificationService();
+    if (amount > 0) {
+      await _notificationService.createNotification(
+        'Water Intake',
+        customTitle: 'Water Intake Added',
+        customMessage: 'You added ${(amount * 1000).toStringAsFixed(0)}ml of water. Total: ${(newIntake * 1000).toStringAsFixed(0)}ml',
+      );
+    } else if (amount < 0) {
+      await _notificationService.createNotification(
+        'Water Intake',
+        customTitle: 'Water Intake Removed',
+        customMessage: 'You removed ${(amount.abs() * 1000).toStringAsFixed(0)}ml of water. Total: ${(newIntake * 1000).toStringAsFixed(0)}ml',
+      );
+    } else if (amount == -oldIntake) {
+      await _notificationService.createNotification(
+        'Water Intake',
+        customTitle: 'Water Intake Reset',
+        customMessage: 'Your water intake has been reset to 0ml',
+      );
+    }
     
     // Fetch history in background without showing errors
     try {
