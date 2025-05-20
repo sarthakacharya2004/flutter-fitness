@@ -300,7 +300,6 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       // Update streak
       await _streakService.updateStreak(incrementBy: 10);
       await _loadStreakData(); // Refresh UI with updated streak info
-      print('Streak updated and loaded again');
 
       // Check milestone
       final streakInfo = await _streakService.getStreakInfo();

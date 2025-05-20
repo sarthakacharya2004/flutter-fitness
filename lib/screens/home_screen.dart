@@ -10,6 +10,7 @@ import 'notification_screen.dart';
 import 'package:fitness_hub/services/firestore_service.dart';
 import 'package:fitness_hub/services/waterintake_service.dart';
 import 'package:fitness_hub/services/local_storage_service.dart';
+import 'package:fitness_hub/services/notification_service.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -406,6 +407,7 @@ Widget _buildWeightInfoCard(String title, String value, Color color) {
 
 void _showWeightUpdateDialog(BuildContext context) {
   double newWeight = 80.7;  // Default value
+  final NotificationService _notificationService = NotificationService();
 
   showDialog(
     context: context,
@@ -446,8 +448,26 @@ void _showWeightUpdateDialog(BuildContext context) {
             }
 
             try {
+              // Get current weight for notification
+              final currentWeight = _cachedWeights?['current'];
+              
               // Save weight to Firestore as a Map<String, dynamic>
               await _firestoreService.addWeightLog({'weight': newWeight});
+              
+              // Create notification for weight update
+              if (currentWeight != null) {
+                await _notificationService.createNotification(
+                  'Weight',
+                  customTitle: 'Weight Updated',
+                  customMessage: 'Your weight has been updated from ${currentWeight.toStringAsFixed(1)}kg to ${newWeight.toStringAsFixed(1)}kg',
+                );
+              } else {
+                await _notificationService.createNotification(
+                  'Weight',
+                  customTitle: 'Weight Updated',
+                  customMessage: 'Your weight has been updated to ${newWeight.toStringAsFixed(1)}kg',
+                );
+              }
               
               // Refresh the cached weights
               await _refreshWeights();

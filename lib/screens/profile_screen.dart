@@ -119,9 +119,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     double? oldWeightVal = double.tryParse(oldWeight);
                     if (newWeightVal != null && oldWeightVal != null) {
                       double difference = newWeightVal - oldWeightVal;
-                      _notificationService.createActivityNotification(
+                      _notificationService.createNotification(
                         'Profile',
-                        'updated weight from ${oldWeight}kg to ${weight}kg',
+                        customTitle: 'Weight Updated',
+                        customMessage: 'Your weight has been updated from ${oldWeight}kg to ${weight}kg',
                       );
                     }
                     // Only recalculate BMI if both weight and height are available
@@ -134,7 +135,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
                     }
                   } else if (type == 'height') {
+                    String oldHeight = height;
                     height = controller.text;
+                    // Create notification for height update
+                    _notificationService.createNotification(
+                      'Profile',
+                      customTitle: 'Height Updated',
+                      customMessage: 'Your height has been updated from ${oldHeight}cm to ${height}cm',
+                    );
                     // Only recalculate BMI if both weight and height are available
                     if (weight.isNotEmpty && height.isNotEmpty) {
                       double? weightVal = double.tryParse(weight);
@@ -145,7 +153,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
                     }
                   } else if (type == 'bmi') {
+                    String oldBmi = bmi;
                     bmi = controller.text;
+                    // Create notification for BMI update
+                    _notificationService.createNotification(
+                      'Profile',
+                      customTitle: 'BMI Updated',
+                      customMessage: 'Your BMI has been updated from $oldBmi to $bmi',
+                    );
                   }
                 });
                 _saveProfile(); // Save the updated value to Firestore
@@ -212,52 +227,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               ListTile(
                 title: Text('Maintain'),
-                onTap: () async {
-                  final oldGoal = goal;
+                onTap: () {
                   setState(() {
                     goal = 'Maintain';
                   });
-                  await _saveProfile();
-                  // Create notification for goal change
-                  await _notificationService.createNotification(
-                    'Profile',
-                    customTitle: 'Goal Updated',
-                    customMessage: 'Your fitness goal has been changed from $oldGoal to Maintain',
-                  );
+                  _saveProfile();
                   Navigator.pop(context);
                 },
               ),
               ListTile(
                 title: Text('Gain Muscles'),
-                onTap: () async {
-                  final oldGoal = goal;
+                onTap: () {
                   setState(() {
                     goal = 'Gain Muscles';
                   });
-                  await _saveProfile();
-                  // Create notification for goal change
-                  await _notificationService.createNotification(
-                    'Profile',
-                    customTitle: 'Goal Updated',
-                    customMessage: 'Your fitness goal has been changed from $oldGoal to Gain Muscles',
-                  );
+                  _saveProfile();
                   Navigator.pop(context);
                 },
               ),
               ListTile(
                 title: Text('Lose Weight'),
-                onTap: () async {
-                  final oldGoal = goal;
+                onTap: () {
                   setState(() {
                     goal = 'Lose Weight';
                   });
-                  await _saveProfile();
-                  // Create notification for goal change
-                  await _notificationService.createNotification(
-                    'Profile',
-                    customTitle: 'Goal Updated',
-                    customMessage: 'Your fitness goal has been changed from $oldGoal to Lose Weight',
-                  );
+                  _saveProfile();
                   Navigator.pop(context);
                 },
               ),
@@ -296,8 +290,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               onPressed: () {
                 setState(() {
+                  String oldName = name;
+                  String oldDescription = description;
                   name = nameController.text;
                   description = descriptionController.text;
+                  
+                  // Create notifications for profile updates
+                  if (oldName != name) {
+                    _notificationService.createNotification(
+                      'Profile',
+                      customTitle: 'Name Updated',
+                      customMessage: 'Your name has been updated from "$oldName" to "$name"',
+                    );
+                  }
+                  if (oldDescription != description) {
+                    _notificationService.createNotification(
+                      'Profile',
+                      customTitle: 'Description Updated',
+                      customMessage: 'Your profile description has been updated',
+                    );
+                  }
                 });
                 _saveProfile(); // Save the updated name and description to Firestore
                 Navigator.pop(context);
@@ -636,22 +648,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Profile header widget
   // Function to handle profile image selection and local storage
   Future<void> _changeProfileImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 800, // Limit image width
-      maxHeight: 800, // Limit image height
-      imageQuality: 70, // Compress image quality to 70%
-    );
-    if (image != null) {
-      setState(() {
-        isLoading = true;
-      });
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 70,
+      );
+      
+      if (image != null) {
+        setState(() {
+          isLoading = true;
+        });
 
-      try {
         final bytes = await image.readAsBytes();
         final base64Image = base64Encode(bytes);
         
-        // Save image to local storage only
+        // Save image to local storage
         await LocalStorageService.saveProfileImage(base64Image);
         
         // Update state with base64 image
@@ -660,20 +673,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
 
         // Create notification for profile image update
-        _notificationService.createActivityNotification(
+        await _notificationService.createNotification(
           'Profile',
-          'updated profile picture',
+          customTitle: 'Profile Picture Updated',
+          customMessage: 'Your profile picture has been updated successfully',
         );
 
-        // Update profile in Firestore without the image
+        // Update profile in Firestore
         await _saveProfile();
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating profile image')),
-          );
-        }
-      } finally {
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating profile image: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           isLoading = false;
         });
@@ -695,6 +711,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? MemoryImage(base64Decode(profileImageUrl))
                       : const AssetImage('assets/profile_image.png') as ImageProvider,
                   radius: 40,
+                  onBackgroundImageError: (exception, stackTrace) {
+                    debugPrint('Error loading profile image: $exception');
+                    setState(() {
+                      profileImageUrl = ''; // Reset to default image
+                    });
+                  },
                 ),
                 Positioned(
                   bottom: 0,
@@ -716,31 +738,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    name.isNotEmpty ? name : 'Loading...', // Display the name fetched from Firestore
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name.isNotEmpty ? name : 'Loading...',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: _showEditProfileDialog, // Show edit dialog
-                  ),
-                ],
-              ),
-              Text(
-                description,
-                style: const TextStyle(
-                  color: Color.fromARGB(255, 105, 105, 105),
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: _showEditProfileDialog,
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 105, 105, 105),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
