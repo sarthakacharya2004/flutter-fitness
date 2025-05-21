@@ -1,6 +1,7 @@
 import 'package:fitness_hub/services/firestore_service.dart';
 import 'package:fitness_hub/services/goal_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
@@ -26,6 +27,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
   List<Map<String, dynamic>> _meals = [];
   bool isLoading = true;
   String _imageUrl = '';
+  Set<String> _favoriteMealIds = {};
 
   Future<void> _loadImageUrl() async {
     final prefs = await SharedPreferences.getInstance();
@@ -40,6 +42,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
     _loadMeals();
     _initializeNutritionPlan();
     _loadImageUrl();
+    _loadFavorites();
   }
 
   Future<void> _initializeNutritionPlan() async {
@@ -107,6 +110,65 @@ class _NutritionScreenState extends State<NutritionScreen> {
       });
     } finally {
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _loadFavorites() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('favorites')
+            .doc('meals')
+            .get();
+
+        if (doc.exists && doc.data() != null) {
+          setState(() {
+            _favoriteMealIds = (doc.data()?['mealIds'] as List<dynamic>? ?? [])
+                .map((id) => id.toString())
+                .toSet();
+          });
+        }
+      } catch (e) {
+        print('Error loading favorites: $e');
+      }
+    }
+  }
+
+  Future<void> _toggleFavorite(String mealId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      if (_favoriteMealIds.contains(mealId)) {
+        _favoriteMealIds.remove(mealId);
+      } else {
+        _favoriteMealIds.add(mealId);
+      }
+    });
+    
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('favorites')
+          .doc('meals')
+          .set({
+        'mealIds': _favoriteMealIds.toList(),
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error saving favorite: $e');
+      // Revert the state if saving fails
+      setState(() {
+        if (_favoriteMealIds.contains(mealId)) {
+          _favoriteMealIds.remove(mealId);
+        } else {
+          _favoriteMealIds.add(mealId);
+        }
+      });
     }
   }
 
@@ -424,7 +486,24 @@ class _NutritionScreenState extends State<NutritionScreen> {
   ];
 
   List<Map<String, dynamic>> _filteredMeals(List<Map<String, dynamic>> meals) {
-    if (_selectedCategory == 'All' && _searchController.text.isEmpty) return meals;
+    if (_selectedCategory == 'All' && _searchController.text.isEmpty) {
+      // Sort meals to show favorites first
+      return meals.where((meal) {
+        final matchesCategory = _selectedCategory == 'All' || meal['category'] == _selectedCategory;
+        final matchesSearch = _searchController.text.isEmpty ||
+            meal['title'].toLowerCase().contains(_searchController.text.toLowerCase()) ||
+            meal['category'].toLowerCase().contains(_searchController.text.toLowerCase()) ||
+            meal['description']?.toLowerCase().contains(_searchController.text.toLowerCase()) == true;
+        return matchesCategory && matchesSearch;
+      }).toList()
+        ..sort((a, b) {
+          final aIsFavorite = _favoriteMealIds.contains(a['id']);
+          final bIsFavorite = _favoriteMealIds.contains(b['id']);
+          if (aIsFavorite && !bIsFavorite) return -1;
+          if (!aIsFavorite && bIsFavorite) return 1;
+          return 0;
+        });
+    }
     return meals.where((meal) {
       final matchesCategory = _selectedCategory == 'All' || meal['category'] == _selectedCategory;
       final matchesSearch = _searchController.text.isEmpty ||
@@ -628,6 +707,8 @@ class _NutritionScreenState extends State<NutritionScreen> {
   Widget _buildMealCard({required Map<String, dynamic> meal}) {
     final String? imagePath = meal['image'] ?? meal['imageUrl'];
     final bool hasValidImage = imagePath != null && imagePath.isNotEmpty;
+    final String mealId = meal['id'] ?? meal['title'].toString().toLowerCase().replaceAll(' ', '_');
+    final bool isFavorite = _favoriteMealIds.contains(mealId);
     
     return GestureDetector(
       onTap: () {
@@ -635,7 +716,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => MealDetailScreen(
-              mealId: meal['id'] ?? '',
+              mealId: mealId,
               title: meal['title'] ?? 'No title',
               calories: meal['calories'] ?? '0 kcal',
               time: meal['time'] ?? '0 minutes',
@@ -662,17 +743,15 @@ class _NutritionScreenState extends State<NutritionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image container
             Expanded(
               flex: 3,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  color: Colors.grey[300], // Fallback color
+                  color: Colors.grey[300],
                 ),
                 child: Stack(
                   children: [
-                    // Image with fallback
                     if (hasValidImage)
                       Positioned.fill(
                         child: ClipRRect(
@@ -680,8 +759,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
                           child: _buildMealImage(imagePath!),
                         ),
                       ),
-                    
-                    // Show icon if no image
                     if (!hasValidImage)
                       const Positioned.fill(
                         child: Center(
@@ -692,15 +769,22 @@ class _NutritionScreenState extends State<NutritionScreen> {
                           ),
                         ),
                       ),
-                      
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(20),
+                      child: GestureDetector(
+                        onTap: () => _toggleFavorite(mealId),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? Colors.red : Colors.grey,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -738,7 +822,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
                 ),
               ),
             ),
-            // Text content section remains the same
             Expanded(
               flex: 2,
               child: Padding(
